@@ -37,10 +37,10 @@ from carla.planner.city_track import CityTrack
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 0         #  spawn index for player
-DESTINATION_INDEX = 24          # Setting a Destination HERE
-NUM_PEDESTRIANS        = 30     # total number of pedestrians to spawn
-NUM_VEHICLES           = 30     # total number of vehicles to spawn
+PLAYER_START_INDEX = 91         #  spawn index for player
+DESTINATION_INDEX = 20          # Setting a Destination HERE
+NUM_PEDESTRIANS        = 2     # total number of pedestrians to spawn
+NUM_VEHICLES           = 2     # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -139,6 +139,7 @@ def rotate_z(angle):
     return R
 
 # Transform the obstacle with its boundary point in the global frame
+# bounding_box.transform.location, bounding_box.extent ,bounding_box.transform.rotation
 def obstacle_to_world(location, dimensions, orientation):
     box_pts = []
 
@@ -489,6 +490,14 @@ def exec_waypoint_nav_demo(args):
         #############################################
         # Store pose history starting from the start position
         measurement_data, sensor_data = client.read_data()
+
+        for agent in measurement_data.non_player_agents:
+            if agent.HasField('vehicle'):
+                print(agent.vehicle.forward_speed)
+                
+
+
+
         start_timestamp = measurement_data.game_timestamp / 1000.0
         start_x, start_y, start_z, start_pitch, start_roll, start_yaw = get_current_pose(measurement_data)
         send_control_command(client, throttle=0.0, steer=0, brake=1.0)
@@ -617,7 +626,10 @@ def exec_waypoint_nav_demo(args):
 
                 previuos_waypoint = waypoint
 
+        
+
         waypoints = np.array(waypoints)
+
         #############################################
         # Controller 2D Class Declaration
         #############################################
@@ -648,6 +660,8 @@ def exec_waypoint_nav_demo(args):
                                            # axis in the graph is flipped
         trajectory_fig.set_axis_equal()    # X-Y spacing should be equal in size
 
+
+
         # Add waypoint markers
         trajectory_fig.add_graph("waypoints", window_size=len(waypoints),
                                  x0=waypoints[:,0], y0=waypoints[:,1],
@@ -668,6 +682,22 @@ def exec_waypoint_nav_demo(args):
                                  x0=[0]* (8 * (NUM_PEDESTRIANS + NUM_VEHICLES)), 
                                  y0=[0]* (8 * (NUM_PEDESTRIANS + NUM_VEHICLES)),
                                     linestyle="", marker="+", color='b')
+
+        i=0
+        for agent in measurement_data.non_player_agents:
+                       
+            if agent.HasField("traffic_light"):
+                i+=1
+                x0=agent.traffic_light.transform.location.x
+                y0=agent.traffic_light.transform.location.y
+                if x0>70 and x0<170 and y0>-10 and y0<80:
+                    trajectory_fig.add_graph(f"T_L_{i}",
+                                    window_size=1, 
+                                    x0=[x0], y0=[y0],
+                                    marker=11, color=[1, 0.5, 0], 
+                                    markertext="", marker_text_offset=1)
+                
+                    
 
         # Add end position marker
         trajectory_fig.add_graph("end_pos", window_size=1, 
