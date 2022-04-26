@@ -52,8 +52,16 @@ def check_for_lead_vehicle(self, ego_state, pedestrian_position):
         return False
 
     # Check whether the ego vehicle is turning or not 
-    # (if yaw lies within +/- 15 degrees the car is turning, else not)
-    if ego_heading_vector[0] > math.cos(YAW_OF_TURNING):
+    # (if yaw lies within +/- 15 degrees respect the way the car is turning, else not)
+    ego_yaw = ego_state[2]
+    
+    #conditions = [ego_yaw >= x - YAW_OF_TURNING and ego_yaw <= x + YAW_OF_TURNING for x in (0, math.pi/2, math.pi, -math.pi/2)]
+    zero_condition = ego_yaw >= 0 - YAW_OF_TURNING and ego_yaw <= 0 + YAW_OF_TURNING
+    pi2_condition = ego_yaw >= math.pi/2 - YAW_OF_TURNING and ego_yaw <= math.pi/2 + YAW_OF_TURNING
+    pi_condition = ego_yaw >= math.pi - YAW_OF_TURNING and ego_yaw <= math.pi + YAW_OF_TURNING
+    minus_pi2_condition = ego_yaw >= - math.pi/2 - YAW_OF_TURNING and ego_yaw <= - math.pi/2 + YAW_OF_TURNING
+
+    if not (zero_condition or pi2_condition or pi_condition or minus_pi2_condition):
         # If the car is turning, the pedestrian is considered in proximity of the car 
         return True
     else:
