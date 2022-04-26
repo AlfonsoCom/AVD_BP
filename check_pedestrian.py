@@ -1,16 +1,16 @@
 import numpy as np, math
 
-PEDESTRIAN_MAX_DISTANCE = 5
+PEDESTRIAN_MAX_DISTANCE = 10
 
 # Distance respect to pedestrian at the left while the ego vehicle isn't turning.
-PEDESTRIAN_REDUCED_DISTANCE = 3
+PEDESTRIAN_REDUCED_DISTANCE = 5
 
 YAW_OF_TURNING = math.pi / 12
 
 LEFT_RELATIVE_ANGLE = math.pi / 3
 
 #Checks if there is a pedestrian ahead of us.
-def check_for_lead_vehicle(self, ego_state, pedestrian_position):
+def check_for_pedestrian(self, ego_state, pedestrian_position):
     """Checks for lead vehicle within the proximity of the ego car, such
     that the ego car should begin to follow the lead vehicle.
 
@@ -73,3 +73,12 @@ def check_for_lead_vehicle(self, ego_state, pedestrian_position):
         else:
             return True
 
+if __name__== "__main__":
+
+    x_v = 10; y_v = 5; speed_v = 5
+    x_ped = 15; y_ped = 4
+
+    ego_state = [x_v, y_v, speed_v]
+    pedestrian_position = [x_ped, y_ped]
+
+    print(check_for_pedestrian(None, ego_state, pedestrian_position))
