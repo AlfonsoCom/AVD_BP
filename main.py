@@ -37,12 +37,12 @@ from carla.planner.city_track import CityTrack
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 91         #  spawn index for player
-DESTINATION_INDEX = 20          # Setting a Destination HERE
-NUM_PEDESTRIANS        = 2     # total number of pedestrians to spawn
-NUM_VEHICLES           = 2     # total number of vehicles to spawn
+PLAYER_START_INDEX = 12        #  spawn index for player
+DESTINATION_INDEX = 93       # Setting a Destination HERE
+NUM_PEDESTRIANS        = 30     # total number of pedestrians to spawn
+NUM_VEHICLES           = 30    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
+SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
 ###############################################################################àà
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -460,6 +460,16 @@ def exec_waypoint_nav_demo(args):
         # send a command back to the CARLA server because synchronous mode
         # is enabled.
         measurement_data, sensor_data = client.read_data()
+
+        # get traffic light information
+        traffic_lights = [] #[id, [x,y],yaw]
+        for agent in measurement_data.non_player_agents:
+            if agent.HasField("traffic_light"):
+                traffic_lights.append([agent.id,
+                [agent.traffic_light.transform.location.x,agent.traffic_light.  transform.location.y],
+                agent.traffic_light.transform.rotation.yaw])
+
+
         sim_start_stamp = measurement_data.game_timestamp / 1000.0
         # Send a control command to proceed to next iteration.
         # This mainly applies for simulations that are in synchronous mode.
@@ -683,19 +693,23 @@ def exec_waypoint_nav_demo(args):
                                  y0=[0]* (8 * (NUM_PEDESTRIANS + NUM_VEHICLES)),
                                     linestyle="", marker="+", color='b')
 
-        i=0
-        for agent in measurement_data.non_player_agents:
-                       
-            if agent.HasField("traffic_light"):
-                i+=1
-                x0=agent.traffic_light.transform.location.x
-                y0=agent.traffic_light.transform.location.y
-                if x0>70 and x0<170 and y0>-10 and y0<80:
-                    trajectory_fig.add_graph(f"T_L_{i}",
+        for i,tl in enumerate(traffic_lights):
+            # compute distances vector between waypoints and current traffic light
+            temp = waypoints[:,:2] - tl[1]
+            # compute module fpr each distances vector 
+            dist = np.linalg.norm(temp,axis=1)
+            # verify if there is at least one traffic_light 
+            # along waypoints trajectory and plot it.
+            # For each i-th waypoint we consider a circle of
+            # radius 5 and centered in i-th waypoint. If traffic lights
+            # point is in almost a circle we considered it.
+            TRAFFIC_LIGHT_DISTANCE = 5.5 # sperimentaly computed
+            if len(np.where(dist<TRAFFIC_LIGHT_DISTANCE)[0]>0):
+                trajectory_fig.add_graph(f"{tl[0]}",
                                     window_size=1, 
-                                    x0=[x0], y0=[y0],
+                                    x0=[tl[1][0]], y0=[tl[1][1]],
                                     marker=11, color=[1, 0.5, 0], 
-                                    markertext="", marker_text_offset=1)
+                                    markertext=f"{i}", marker_text_offset=1)
                 
                     
 
@@ -803,6 +817,37 @@ def exec_waypoint_nav_demo(args):
 
             # UPDATE HERE the obstacles list
             obstacles = []
+            for agent in measurement_data.non_player_agents:
+                if agent.HasField("pedestrian"):
+                    x,y = agent.pedestrian.transform.location.x,agent.pedestrian.transform.location.y
+                    temp = waypoints[:,:2] - [x,y]
+                    # compute module fpr each distances vector 
+                    dist = np.linalg.norm(temp,axis=1)
+                    # verify if there is at least one traffic_light 
+                    # along waypoints trajectory and plot it.
+                    # For each i-th waypoint we consider a circle of
+                    # radius 5 and centered in i-th waypoint. If traffic lights
+                    # point is in almost a circle we considered it.
+                    OBSTACLE_DISTANCE = 10 # sperimentaly computed
+                    if len(np.where(dist<TRAFFIC_LIGHT_DISTANCE)[0]>0):
+                        obstacles.append(obstacle_to_world(agent.pedestrian.transform.location,
+                        agent.pedestrian.bounding_box.extent,
+                        agent.pedestrian.transform.rotation))
+                    if agent.HasField("vehicle"):
+                        x,y = agent.vehicle.transform.location.x,agent.vehicle.transform.location.y
+                        temp = waypoints[:,:2] - [x,y]
+                        # compute module fpr each distances vector 
+                        dist = np.linalg.norm(temp,axis=1)
+                        # verify if there is at least one traffic_light 
+                        # along waypoints trajectory and plot it.
+                        # For each i-th waypoint we consider a circle of
+                        # radius 5 and centered in i-th waypoint. If traffic lights
+                        # point is in almost a circle we considered it.
+                        OBSTACLE_DISTANCE = 10 # sperimentaly computed
+                        if len(np.where(dist<TRAFFIC_LIGHT_DISTANCE)[0]>0):
+                            obstacles.append(obstacle_to_world(agent.vehicle.transform.location,
+                            agent.vehicle.bounding_box.extent,
+                            agent.vehicle.transform.rotation))
 
             # Update pose and timestamp
             prev_timestamp = current_timestamp
@@ -955,11 +1000,12 @@ def exec_waypoint_nav_demo(args):
                 trajectory_fig.roll("car", current_x, current_y)
                 
                 # Load parked car points
+                obstacles = np.array(obstacles)
                 if len(obstacles) > 0:
                     x = obstacles[:,:,0]
                     y = obstacles[:,:,1]
-                    x = np.reshape(x, x.shape[0] * x.shape[1])
-                    y = np.reshape(y, y.shape[0] * y.shape[1])
+                    #x = np.reshape(x, x.shape[0] * x.shape[1])
+                    #y = np.reshape(y, y.shape[0] * y.shape[1])
 
                     trajectory_fig.roll("obstacles_points", x, y)
 
@@ -1011,6 +1057,10 @@ def exec_waypoint_nav_demo(args):
                     lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
+            
+            # visualize car location in the world
+            if frame % (LP_FREQUENCY_DIVISOR*3) == 0:
+                print(f"x = {x_history[-1]}\ty = {y_history[-1]}\tyaw = {yaw_history[-1]}")
 
             # Output controller command to CARLA server
             send_control_command(client,
