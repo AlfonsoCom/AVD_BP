@@ -76,11 +76,11 @@ def check_for_pedestrian(self, ego_state, pedestrian_position):
 if __name__== "__main__":
 
     # Insert here coordinates to test
-    x_v = 10; y_v = 5
+    x_v = 10; y_v = 5; angle = 10
     x_ped = 15; y_ped = 4
     #################################
 
-    ego_state = [x_v, y_v, 0]
+    ego_state = [x_v, y_v, 10]
     pedestrian_position = [x_ped, y_ped]
 
     print(check_for_pedestrian(None, ego_state, pedestrian_position))
