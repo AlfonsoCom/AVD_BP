@@ -41,33 +41,6 @@ def compute_semicircle_center(p,p_orientation,radius):
         p_orientation = pi/2 - abs(p_orientation)
         return compute_semicircle_center_parametric(p,p_orientation,radius,sign_x=-1,sign_y=-1)
 
-def check_point_in_circle(center,point,radius):
-    """
-    Check if point is inside semicircle with specific center and radius.
-    params:
-        center: [x,y] semicircle center
-        point: [x,y] a point
-        radius: semicircle radius 
-    return: 
-        boolean: true if the point is inside the semicircle
-    """
-
-    vector = np.subtract(point,center)
-    norm = np.linalg.norm(vector)
-    return norm <= radius
-
-def check_opposite_orientation(teta_1,teta_2):
-    """
-    From the orientation of two moving points verify if they are moving in opposite direction
-    params:
-        teta_1: orientation (in range [-180,180]) of the first point 
-        teta_2: orientation (in range [-180,180]) of the secondo point
-    return:
-        boolean: true if the direction of the two points is opposite
-    """
-    THRESHOLD_DEGREE = 10
-    REFERENCE_ANGLE = 180
-    return abs(REFERENCE_ANGLE-(abs(teta_1)+abs(teta_2))) <= THRESHOLD_DEGREE
 
 
 def check_traffic_light(ego,traffic_lights,semicircle_radius):
@@ -84,7 +57,7 @@ def check_traffic_light(ego,traffic_lights,semicircle_radius):
 
     # compute semicircle center
     center = compute_semicircle_center(ego[:2],ego[2],semicircle_radius)
-
+    print(center)
     # first of all verify if there are traffic lights in a circle of specific radius
     # and center  
     vector = np.subtract(traffic_lights[:,1:3],center)
@@ -153,7 +126,7 @@ def check_traffic_light(ego,traffic_lights,semicircle_radius):
     index_tl = np.argmin(norm)
     return True, tl[index_tl] # return the nearest traffic light
 
-ego = [0,-4,175.75]
+ego = [0,-4,180]
 radius = 4
 S2 = [2,3.84,-0.46,1]
 S1 = [1,-1.02,-0.42,2]
