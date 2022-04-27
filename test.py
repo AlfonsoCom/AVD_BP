@@ -83,22 +83,21 @@ def check_traffic_light(ego,traffic_lights,semicircle_radius):
     #STEP 1 check traffic_light is in semicircle
 
     # compute semicircle center
-    center = compute_semicircle_center(ego[:2],ego[3],semicircle_radius)
+    center = compute_semicircle_center(ego[:2],ego[2],semicircle_radius)
 
     # first of all verify if there are traffic lights in a circle of specific radius
     # and center  
     vector = np.subtract(traffic_lights[:,1:3],center)
-    norm = np.linalg.norm(vector)
-    
+    norm = np.linalg.norm(vector,axis=1)
     index_tl_in_circle = np.where(norm<=semicircle_radius)[0]
-    
     # check if there is at least one traffic light
     if len(index_tl_in_circle) == 0:
-        return False 
+        return False, [] 
+    
     
     
     tl = traffic_lights[index_tl_in_circle]
-
+    
     # STEP 2 check if car orientation is opposite to traffic lights orientation
     # this means that car moving towards these traffic lights.
     # Such that car and traffic lights had must be opposite so the sum
@@ -110,35 +109,57 @@ def check_traffic_light(ego,traffic_lights,semicircle_radius):
     # 180 - ( traffic_lights_yaw + car_yaw)
     index_tl_opposite = np.where( np.abs(REFERENCE_ANGLE-(np.abs(tl[:,3])+abs(ego[2]))) <= THRESHOLD_DEGREE)[0]
     if len(index_tl_opposite) == 0:
-        return False 
+        return False, [] 
 
-    tl = traffic_lights[index_tl_opposite]
+    tl = tl[index_tl_opposite]
 
     # STEP3 check if traffic lights are in the upper semicircle  
     ## NOTE MANAGE LIMIT CASE: e.g. car yaw = 0, 180
 
 
-    dist = np.subtract(traffic_lights[:,1:3],ego[:2])
+    dist = np.subtract(tl[:,1:3],center)
 
     # if the car yaw is negative means that it is moving toward
     # traffic light that has y value smaller than car y values,
     #  so the other traffic lights have to be ignored.
 
-  
+    CAR_THRESHOLD_DEGREE = 10
 
+    if ego[2] >= CAR_THRESHOLD_DEGREE and ego[2] < 180 - CAR_THRESHOLD_DEGREE:
+        index_tl = np.where(dist[:,1]>0)[0]
+    elif ego[2]<= -1*CAR_THRESHOLD_DEGREE and ego[2] > -180 + CAR_THRESHOLD_DEGREE:
+        index_tl = np.where(dist[:,1]<0)[0]
+        #-10 <x<10
+    elif ego[2] >= -1*CAR_THRESHOLD_DEGREE and ego[2] <= CAR_THRESHOLD_DEGREE:
+        index_tl = np.where(dist[:,0]>0)[0]
+        # -180<x<-170 or 170<x<180
+    elif ego[2] <= -180 + CAR_THRESHOLD_DEGREE or ego[2] >= 180 - CAR_THRESHOLD_DEGREE:
+        index_tl = np.where(dist[:,0]<0)[0]
+    
+    tl = tl[index_tl]
+    if len(tl) == 0:
+        return False, []
+    elif len(tl) == 1:
+        return True, tl
     # if the car yaw is positive means that it is moving toward
     # traffic light that has y value smaller than car y values
     #  so the other traffic lights have to be ignored.
 
 
-    # STEP 4 take in account the nearest traffic light
+    # STEP 4 take in account the nearest traffic light according vehicle position
 
     dist = np.subtract(tl[:,1:3],ego[:2])
     norm = np.linalg.norm(dist,axis = 1)
-    tl_index = np.argmin(norm)
-    return tl[tl_index] # return the nearest traffic light
+    index_tl = np.argmin(norm)
+    return True, tl[index_tl] # return the nearest traffic light
 
-
+ego = [0,-4,175.75]
+radius = 4
+S2 = [2,3.84,-0.46,1]
+S1 = [1,-1.02,-0.42,2]
+S3 = [3, 0, -3, 90]
+traffic_lights = np.array([S1,S2,S3])
+print(check_traffic_light(ego,traffic_lights,radius))
     
     
 
@@ -149,7 +170,7 @@ def check_traffic_light(ego,traffic_lights,semicircle_radius):
 
 
 
-print(compute_semicircle_center(point,teta,b))
+# print(compute_semicircle_center(point,teta,b))
 
 ############################################################àà
 
