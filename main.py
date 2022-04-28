@@ -37,8 +37,8 @@ from carla.planner.city_track import CityTrack
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 136        #  spawn index for player
-DESTINATION_INDEX = 93      # Setting a Destination HERE
+PLAYER_START_INDEX = 148   #91        #  spawn index for player
+DESTINATION_INDEX =  61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
 NUM_VEHICLES           = 1    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
@@ -467,7 +467,8 @@ def exec_waypoint_nav_demo(args):
             if agent.HasField("traffic_light"):
                 traffic_lights.append([agent.id,
                 agent.traffic_light.transform.location.x,agent.traffic_light.  transform.location.y,
-                agent.traffic_light.transform.rotation.yaw])
+                agent.traffic_light.transform.rotation.yaw,agent.traffic_light.state])
+                
 
 
         sim_start_stamp = measurement_data.game_timestamp / 1000.0
@@ -694,7 +695,7 @@ def exec_waypoint_nav_demo(args):
                                     linestyle="", marker="+", color='b')
 
         nearest_tl = []
-
+        tl_dict = {}
         for i,tl in enumerate(traffic_lights):
             # compute distances vector between waypoints and current traffic light
             temp = waypoints[:,:2] - tl[1:3]
@@ -707,7 +708,9 @@ def exec_waypoint_nav_demo(args):
             # point is in almost a circle we considered it.
             TRAFFIC_LIGHT_DISTANCE = 10 # sperimentaly computed
             if len(np.where(dist<TRAFFIC_LIGHT_DISTANCE)[0]>0):
-                nearest_tl.append(tl)
+                nearest_tl.append(tl[:-1]) # not interested to store status information  here
+                #get id and status
+                tl_dict[tl[0]]=tl[-1]
                 trajectory_fig.add_graph(f"{tl[0]}",
                                     window_size=1, 
                                     x0=[tl[1]], y0=[tl[2]],
@@ -799,7 +802,8 @@ def exec_waypoint_nav_demo(args):
                                         STOP_LINE_BUFFER)
         bp = behavioural_planner.BehaviouralPlanner(BP_LOOKAHEAD_BASE,
                                                     LEAD_VEHICLE_LOOKAHEAD,
-                                                    nearest_tl)
+                                                    nearest_tl,
+                                                    tl_dict)
 
         #############################################
         # Scenario Execution Loop
@@ -823,6 +827,13 @@ def exec_waypoint_nav_demo(args):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
 
+            # update traffic_lights status
+            for agent in measurement_data.non_player_agents:
+                if agent.id in tl_dict:
+                    tl_dict[agent.id] = agent.traffic_light.state
+
+            bp.set_tl_dict(tl_dict)
+            
             # UPDATE HERE the obstacles list
             obstacles = []
            
