@@ -28,113 +28,7 @@ class BehaviouralPlanner:
     def set_lookahead(self, lookahead):
         self._lookahead = lookahead
 
-    # Handles state transitions and computes the goal state.
-    # def transition_state(self, waypoints, ego_state, closed_loop_speed):
-    #     """Handles state transitions and computes the goal state.  
-        
-    #     args:
-    #         waypoints: current waypoints to track (global frame). 
-    #             length and speed in m and m/s.
-    #             (includes speed to track at each x,y location.)
-    #             format: [[x0, y0, v0],
-    #                      [x1, y1, v1],
-    #                      ...
-    #                      [xn, yn, vn]]
-    #             example:
-    #                 waypoints[2][1]: 
-    #                 returns the 3rd waypoint's y position
-
-    #                 waypoints[5]:
-    #                 returns [x5, y5, v5] (6th waypoint)
-    #         ego_state: ego state vector for the vehicle. (global frame)
-    #             format: [ego_x, ego_y, ego_yaw, ego_open_loop_speed]
-    #                 ego_x and ego_y     : position (m)
-    #                 ego_yaw             : top-down orientation [-pi to pi]
-    #                 ego_open_loop_speed : open loop speed (m/s)
-    #         closed_loop_speed: current (closed-loop) speed for vehicle (m/s)
-    #     variables to set:
-    #         self._goal_index: Goal index for the vehicle to reach
-    #             i.e. waypoints[self._goal_index] gives the goal waypoint
-    #         self._goal_state: Goal state for the vehicle to reach (global frame)
-    #             format: [x_goal, y_goal, v_goal]
-    #         self._state: The current state of the vehicle.
-    #             available states: 
-    #                 FOLLOW_LANE         : Follow the global waypoints (lane).
-    #                 DECELERATE_TO_STOP  : Decelerate to stop.
-    #                 STAY_STOPPED        : Stay stopped.
-    #         self._stop_count: Counter used to count the number of cycles which
-    #             the vehicle was in the STAY_STOPPED state so far.
-    #     useful_constants:
-    #         STOP_THRESHOLD  : Stop speed threshold (m). The vehicle should fully
-    #                           stop when its speed falls within this threshold.
-    #         STOP_COUNTS     : Number of cycles (simulation iterations) 
-    #                           before moving from stop sign.
-    #     """
-    #     # In this state, continue tracking the lane by finding the
-    #     # goal index in the waypoint list that is within the lookahead
-    #     # distance. Then, check to see if the waypoint path intersects
-    #     # with any stop lines. If it does, then ensure that the goal
-    #     # state enforces the car to be stopped before the stop line.
-    #     # You should use the get_closest_index(), get_goal_index(), and
-    #     # check_for_stop_signs() helper functions.
-    #     # Make sure that get_closest_index() and get_goal_index() functions are
-    #     # complete, and examine the check_for_stop_signs() function to
-    #     # understand it.
-    #     if self._state == FOLLOW_LANE:
-    #         #print("FOLLOW_LANE")
-    #         # First, find the closest index to the ego vehicle.
-    #         closest_len, closest_index = get_closest_index(waypoints, ego_state)
-
-    #         # Next, find the goal index that lies within the lookahead distance
-    #         # along the waypoints.
-    #         goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-    #         while waypoints[goal_index][2] <= 0.1: goal_index += 1
-
-    #         self._goal_index = goal_index
-    #         self._goal_state = waypoints[goal_index]
-            
-
-    #     # In this state, check if we have reached a complete stop. Use the
-    #     # closed loop speed to do so, to ensure we are actually at a complete
-    #     # stop, and compare to STOP_THRESHOLD.  If so, transition to the next
-    #     # state.
-    #     elif self._state == DECELERATE_TO_STOP:
-    #         #print("DECELERATE_TO_STOP")
-    #         if abs(closed_loop_speed) <= STOP_THRESHOLD:
-    #             self._state = STAY_STOPPED
-    #             self._stop_count = 0
-
-    #     # In this state, check to see if we have stayed stopped for at
-    #     # least STOP_COUNTS number of cycles. If so, we can now leave
-    #     # the stop sign and transition to the next state.
-    #     elif self._state == STAY_STOPPED:
-    #         #print("STAY_STOPPED")
-    #         # We have stayed stopped for the required number of cycles.
-    #         # Allow the ego vehicle to leave the stop sign. Once it has
-    #         # passed the stop sign, return to lane following.
-    #         # You should use the get_closest_index(), get_goal_index(), and 
-    #         # check_for_stop_signs() helper functions.
-    #         closest_len, closest_index = get_closest_index(waypoints, ego_state)
-    #         goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-    #         while waypoints[goal_index][2] <= 0.1: goal_index += 1
-
-    #         # We've stopped for the required amount of time, so the new goal 
-    #         # index for the stop line is not relevant. Use the goal index
-    #         # that is the lookahead distance away. 
-                            
-    #         self._goal_index = goal_index
-    #         self._goal_state = waypoints[goal_index]
-
-    #         # If the stop sign is no longer along our path, we can now
-    #         # transition back to our lane following state.
-            
-    #         #if not stop_sign_found: self._state = FOLLOW_LANE
-
-    #         self._state = FOLLOW_LANE
-                
-    #     else:
-    #         raise ValueError('Invalid state value.')
-
+    #Handles state transitions and computes the goal state.
     def transition_state(self, waypoints, ego_state, closed_loop_speed):
         """Handles state transitions and computes the goal state.  
         
@@ -186,32 +80,146 @@ class BehaviouralPlanner:
         # Make sure that get_closest_index() and get_goal_index() functions are
         # complete, and examine the check_for_stop_signs() function to
         # understand it.
-
         if self._state == FOLLOW_LANE:
+            #print("FOLLOW_LANE")
+            # First, find the closest index to the ego vehicle.
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
+
+            # Next, find the goal index that lies within the lookahead distance
+            # along the waypoints.
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-            #goal_index, stop_sign_found = self.check_for_stop_signs(waypoints,closest_index, goal_index)
+            #while waypoints[goal_index][2] <= 0.1: goal_index += 1
+
+            self._goal_index = goal_index
+            self._goal_state = waypoints[goal_index]
+
             print("\n")
-            print("x\ty\tyaw")
+            print("\tx\ty\tyaw")
             for tl in self._traffic_lights:
                 print("TL: ", tl[1:])
-            print("FUNC OUTPUT: ",check_traffic_light(ego_state,self._traffic_lights,1))
-            self._goal_index = goal_index
-            stop_sign_found = False
-            if stop_sign_found:
-                self._state = DECELERATE_TO_STOP
-                
-                self._goal_state = [ waypoints[goal_index][0], waypoints[goal_index][1],0]
-            else:
-                self._goal_state =  waypoints[goal_index]
+            print("FUNC OUTPUT: ",check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,1))
+            
+            
+
+        # In this state, check if we have reached a complete stop. Use the
+        # closed loop speed to do so, to ensure we are actually at a complete
+        # stop, and compare to STOP_THRESHOLD.  If so, transition to the next
+        # state.
         elif self._state == DECELERATE_TO_STOP:
-            if closed_loop_speed < STOP_THRESHOLD:
+            #print("DECELERATE_TO_STOP")
+            if abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED
-        elif self._state == STAY_STOPPED:
-            self._stop_count +=1
-            if self._stop_count > STOP_COUNTS:
-                self._state = FOLLOW_LANE
                 self._stop_count = 0
+
+        # In this state, check to see if we have stayed stopped for at
+        # least STOP_COUNTS number of cycles. If so, we can now leave
+        # the stop sign and transition to the next state.
+        elif self._state == STAY_STOPPED:
+            #print("STAY_STOPPED")
+            # We have stayed stopped for the required number of cycles.
+            # Allow the ego vehicle to leave the stop sign. Once it has
+            # passed the stop sign, return to lane following.
+            # You should use the get_closest_index(), get_goal_index(), and 
+            # check_for_stop_signs() helper functions.
+            closest_len, closest_index = get_closest_index(waypoints, ego_state)
+            goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
+            while waypoints[goal_index][2] <= 0.1: goal_index += 1
+
+            # We've stopped for the required amount of time, so the new goal 
+            # index for the stop line is not relevant. Use the goal index
+            # that is the lookahead distance away. 
+                            
+            self._goal_index = goal_index
+            self._goal_state = waypoints[goal_index]
+
+            # If the stop sign is no longer along our path, we can now
+            # transition back to our lane following state.
+            
+            #if not stop_sign_found: self._state = FOLLOW_LANE
+
+            self._state = FOLLOW_LANE
+                
+        else:
+            raise ValueError('Invalid state value.')
+
+    # def transition_state(self, waypoints, ego_state, closed_loop_speed):
+    #     """Handles state transitions and computes the goal state.  
+        
+    #     args:
+    #         waypoints: current waypoints to track (global frame). 
+    #             length and speed in m and m/s.
+    #             (includes speed to track at each x,y location.)
+    #             format: [[x0, y0, v0],
+    #                      [x1, y1, v1],
+    #                      ...
+    #                      [xn, yn, vn]]
+    #             example:
+    #                 waypoints[2][1]: 
+    #                 returns the 3rd waypoint's y position
+
+    #                 waypoints[5]:
+    #                 returns [x5, y5, v5] (6th waypoint)
+    #         ego_state: ego state vector for the vehicle. (global frame)
+    #             format: [ego_x, ego_y, ego_yaw, ego_open_loop_speed]
+    #                 ego_x and ego_y     : position (m)
+    #                 ego_yaw             : top-down orientation [-pi to pi]
+    #                 ego_open_loop_speed : open loop speed (m/s)
+    #         closed_loop_speed: current (closed-loop) speed for vehicle (m/s)
+    #     variables to set:
+    #         self._goal_index: Goal index for the vehicle to reach
+    #             i.e. waypoints[self._goal_index] gives the goal waypoint
+    #         self._goal_state: Goal state for the vehicle to reach (global frame)
+    #             format: [x_goal, y_goal, v_goal]
+    #         self._state: The current state of the vehicle.
+    #             available states: 
+    #                 FOLLOW_LANE         : Follow the global waypoints (lane).
+    #                 DECELERATE_TO_STOP  : Decelerate to stop.
+    #                 STAY_STOPPED        : Stay stopped.
+    #         self._stop_count: Counter used to count the number of cycles which
+    #             the vehicle was in the STAY_STOPPED state so far.
+    #     useful_constants:
+    #         STOP_THRESHOLD  : Stop speed threshold (m). The vehicle should fully
+    #                           stop when its speed falls within this threshold.
+    #         STOP_COUNTS     : Number of cycles (simulation iterations) 
+    #                           before moving from stop sign.
+    #     """
+    #     # In this state, continue tracking the lane by finding the
+    #     # goal index in the waypoint list that is within the lookahead
+    #     # distance. Then, check to see if the waypoint path intersects
+    #     # with any stop lines. If it does, then ensure that the goal
+    #     # state enforces the car to be stopped before the stop line.
+    #     # You should use the get_closest_index(), get_goal_index(), and
+    #     # check_for_stop_signs() helper functions.
+    #     # Make sure that get_closest_index() and get_goal_index() functions are
+    #     # complete, and examine the check_for_stop_signs() function to
+    #     # understand it.
+
+    #     if self._state == FOLLOW_LANE:
+    #         closest_len, closest_index = get_closest_index(waypoints, ego_state)
+    #         goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
+    #         #goal_index, stop_sign_found = self.check_for_stop_signs(waypoints,closest_index, goal_index)
+    #         print("\n")
+    #         print("x\ty\tyaw")
+    #         for tl in self._traffic_lights:
+    #             print("TL: ", tl[1:])
+    #         print("FUNC OUTPUT: ",check_traffic_light(ego_state,self._traffic_lights,1))
+
+    #         self._goal_index = goal_index
+    #         stop_sign_found = False
+    #         if stop_sign_found:
+    #             self._state = DECELERATE_TO_STOP
+                
+    #             self._goal_state = [ waypoints[goal_index][0], waypoints[goal_index][1],0]
+    #         else:
+    #             self._goal_state =  waypoints[goal_index]
+    #     elif self._state == DECELERATE_TO_STOP:
+    #         if closed_loop_speed < STOP_THRESHOLD:
+    #             self._state = STAY_STOPPED
+    #     elif self._state == STAY_STOPPED:
+    #         self._stop_count +=1
+    #         if self._stop_count > STOP_COUNTS:
+    #             self._state = FOLLOW_LANE
+    #             self._stop_count = 0
 
     # Gets the goal index in the list of waypoints, based on the lookahead and
     # the current ego state. In particular, find the earliest waypoint that has accumulated
@@ -422,7 +430,7 @@ def compute_semicircle_center(p,p_orientation,radius):
 
 
 
-def check_traffic_light(ego,traffic_lights,semicircle_radius):
+def check_traffic_light(ego_pos,ego_yaw,traffic_lights,semicircle_radius):
     """
     Checks if a traffic_light is in car trajectory.
     params:
@@ -435,10 +443,10 @@ def check_traffic_light(ego,traffic_lights,semicircle_radius):
     #STEP 1 check traffic_light is in semicircle
 
     # compute semicircle center
-    ego[2] = ego[2]*180/math.pi
-    print("EGO_STATE: ",ego)
+    ego_yaw = ego_yaw*180/math.pi
+    print("EGO_STATE: ",ego_pos,ego_yaw)
 
-    center = compute_semicircle_center(ego[:2],ego[2],semicircle_radius)
+    center = compute_semicircle_center(ego_pos,ego_yaw,semicircle_radius)
     print("Center Point: ",center)
     # first of all verify if there are traffic lights in a circle of specific radius
     # and center  
@@ -462,7 +470,7 @@ def check_traffic_light(ego,traffic_lights,semicircle_radius):
     REFERENCE_ANGLE = 180
     
     # 180 - ( traffic_lights_yaw + car_yaw)
-    index_tl_opposite = np.where( np.abs(REFERENCE_ANGLE-(np.abs(tl[:,3])+abs(ego[2]))) <= THRESHOLD_DEGREE)[0]
+    index_tl_opposite = np.where( np.abs(REFERENCE_ANGLE-(np.abs(tl[:,3])+abs(ego_yaw))) <= THRESHOLD_DEGREE)[0]
     if len(index_tl_opposite) == 0:
         return False, [] 
 
@@ -480,15 +488,15 @@ def check_traffic_light(ego,traffic_lights,semicircle_radius):
 
     CAR_THRESHOLD_DEGREE = 10
 
-    if ego[2] >= CAR_THRESHOLD_DEGREE and ego[2] < 180 - CAR_THRESHOLD_DEGREE:
+    if ego_yaw >= CAR_THRESHOLD_DEGREE and ego_yaw < 180 - CAR_THRESHOLD_DEGREE:
         index_tl = np.where(dist[:,1]>0)[0]
-    elif ego[2]<= -1*CAR_THRESHOLD_DEGREE and ego[2] > -180 + CAR_THRESHOLD_DEGREE:
+    elif ego_yaw<= -1*CAR_THRESHOLD_DEGREE and ego_yaw > -180 + CAR_THRESHOLD_DEGREE:
         index_tl = np.where(dist[:,1]<0)[0]
         #-10 <x<10
-    elif ego[2] >= -1*CAR_THRESHOLD_DEGREE and ego[2] <= CAR_THRESHOLD_DEGREE:
+    elif ego_yaw >= -1*CAR_THRESHOLD_DEGREE and ego_yaw <= CAR_THRESHOLD_DEGREE:
         index_tl = np.where(dist[:,0]>0)[0]
         # -180<x<-170 or 170<x<180
-    elif ego[2] <= -180 + CAR_THRESHOLD_DEGREE or ego[2] >= 180 - CAR_THRESHOLD_DEGREE:
+    elif ego_yaw <= -180 + CAR_THRESHOLD_DEGREE or ego_yaw >= 180 - CAR_THRESHOLD_DEGREE:
         index_tl = np.where(dist[:,0]<0)[0]
     
     tl = tl[index_tl]

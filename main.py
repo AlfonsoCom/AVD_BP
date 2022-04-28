@@ -37,10 +37,10 @@ from carla.planner.city_track import CityTrack
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 20        #  spawn index for player
-DESTINATION_INDEX = 27       # Setting a Destination HERE
-NUM_PEDESTRIANS        = 30     # total number of pedestrians to spawn
-NUM_VEHICLES           = 30    # total number of vehicles to spawn
+PLAYER_START_INDEX = 136        #  spawn index for player
+DESTINATION_INDEX = 93      # Setting a Destination HERE
+NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
+NUM_VEHICLES           = 1    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -717,7 +717,6 @@ def exec_waypoint_nav_demo(args):
         nearest_tl = np.array(nearest_tl)
         print("SHAPE:")
         print(nearest_tl.shape)
-        # dist = np.subtract(waypoints[:,:2],traffic_lights[:,1:3])
                 
                     
 
