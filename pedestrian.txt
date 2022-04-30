@@ -7,7 +7,7 @@ pedestrian {
       y: 205.97964477539062
       z: 39.10274887084961
     }
-    orientation {
+    orientation { #ATTENZIONE, E' DEPRECATO!!!
       x: 1.0
       y: -1.5978966985130683e-06
     }

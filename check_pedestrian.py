@@ -10,9 +10,9 @@ YAW_OF_TURNING = math.pi / 12
 LEFT_RELATIVE_ANGLE = math.pi / 3
 
 #Checks if there is a pedestrian ahead of us.
-def check_for_pedestrian(self, ego_state, pedestrian_position):
-    """Checks for lead vehicle within the proximity of the ego car, such
-    that the ego car should begin to follow the lead vehicle.
+def check_for_pedestrian(self, ego_state, pedestrian_state):
+    """Checks for a specific pedestrian within the proximity 
+    of the ego car, such that the ego car should stop.
 
     args:
         ego_state: ego state vector for the vehicle. (global frame)
@@ -20,17 +20,20 @@ def check_for_pedestrian(self, ego_state, pedestrian_position):
                 ego_x and ego_y     : position (m)
                 ego_yaw             : top-down orientation [-pi to pi]
                 ego_open_loop_speed : open loop speed (m/s)
-        pedestrian_position: The [x, y] position of the pedestrian.
-            Lengths are in meters, and it is in the global frame.
+        pedestrian_state: state vector for the pedestrian. (global frame)
+            format: [ped_x, ped_y, ped_yaw, ped_forward_speed]
+                ped_x and ped_y     : position (m)
+                ped_yaw             : top-down orientation [-pi to pi]
+                ped_forward_speed   : forward speed (m/s)
     returns:
-        pedestrian_checked: Boolean flag on whether there is a pedestrian 
+        pedestrian_found: Boolean flag on whether this pedestrian is
             in proximity of the ego car.
     """
 
     # Check pedestrian position delta vector relative to heading, as well as
     # distance, to determine if there is a pedestrian.
-    pedestrian_delta_vector = [abs(pedestrian_position[0] - ego_state[0]), 
-                                abs(pedestrian_position[1] - ego_state[1])]
+    pedestrian_delta_vector = [(pedestrian_state[0] - ego_state[0]), 
+                                (pedestrian_state[1] - ego_state[1])]
     pedestrian_distance = np.linalg.norm(pedestrian_delta_vector)
     
     # Check to see if pedestrian is within range, and is ahead of us.
@@ -40,22 +43,27 @@ def check_for_pedestrian(self, ego_state, pedestrian_position):
 
     # Compute the angle between the normalized vector between the pedestrian
     # and ego vehicle position with the ego vehicle's heading vector.
-    pedestrian_delta_vector = np.divide(pedestrian_delta_vector, 
-                                        pedestrian_distance)
-    print(pedestrian_delta_vector)
-    ego_heading_vector = [math.cos(ego_state[2]), 
-                            math.sin(ego_state[2])]
+    pedestrian_delta_vector = np.divide(pedestrian_delta_vector, pedestrian_distance)
+    ego_heading_vector = [math.cos(ego_state[2]), math.sin(ego_state[2])]
+
+    # Compute the cosine of the angle between ego car and pedestrian respect to Carla
+    # cos(a-b) = cos(a)cos(b)+sen(a)sen(b)
+    cos = np.dot(pedestrian_delta_vector, ego_heading_vector)
 
     # Check to see if the relative angle between the pedestrian and the ego
     # vehicle lies within +/- 90 degrees of the ego vehicle's heading 
     # (if cosine of relative angle is negative, it doesn't lies in that range).
-    if pedestrian_delta_vector[0] < 0:
+    if cos < 0:
         return False
+    else:
+        return True
 
+    '''
     # Check whether the ego vehicle is turning or not 
     # (if yaw lies within +/- 15 degrees respect the way the car is turning, else not)
     ego_yaw = ego_state[2]
     
+    # BASTA QUESTO PER DIRE CHE LA MACCHINA STA SVOLTANDO? PUO' ESSERE CHE LA STRADA NON SIA DRITTA RISPETTO ALL'ORIGINE DEGLI ASSI
     #conditions = [ego_yaw >= x - YAW_OF_TURNING and ego_yaw <= x + YAW_OF_TURNING for x in (0, math.pi/2, math.pi, -math.pi/2)]
     zero_condition = ego_yaw >= 0 - YAW_OF_TURNING and ego_yaw <= 0 + YAW_OF_TURNING
     pi2_condition = ego_yaw >= math.pi/2 - YAW_OF_TURNING and ego_yaw <= math.pi/2 + YAW_OF_TURNING
@@ -73,15 +81,19 @@ def check_for_pedestrian(self, ego_state, pedestrian_position):
             return False
         else:
             return True
+    '''
 
 if __name__== "__main__":
 
     # Insert here coordinates to test
-    x_v = 2; y_v = 1; yaw_v = 0
-    x_ped = 3; y_ped = 7
+    x_v = 8; y_v = 0; yaw_v = math.pi
+    x_ped = 10; y_ped = 8
     #################################
 
     ego_state = [x_v, y_v, yaw_v, 10]
-    pedestrian_position = [x_ped, y_ped]
+    pedestrian_state = [x_ped, y_ped]
 
-    print(check_for_pedestrian(None, ego_state, pedestrian_position))
+    if check_for_pedestrian(None, ego_state, pedestrian_state):
+        print("STOP")
+    else:
+        print("DON'T STOP")
