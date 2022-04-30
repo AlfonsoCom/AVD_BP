@@ -29,8 +29,8 @@ def check_for_pedestrian(self, ego_state, pedestrian_position):
 
     # Check pedestrian position delta vector relative to heading, as well as
     # distance, to determine if there is a pedestrian.
-    pedestrian_delta_vector = [pedestrian_position[0] - ego_state[0], 
-                                pedestrian_position[1] - ego_state[1]]
+    pedestrian_delta_vector = [abs(pedestrian_position[0] - ego_state[0]), 
+                                abs(pedestrian_position[1] - ego_state[1])]
     pedestrian_distance = np.linalg.norm(pedestrian_delta_vector)
     
     # Check to see if pedestrian is within range, and is ahead of us.
@@ -42,6 +42,7 @@ def check_for_pedestrian(self, ego_state, pedestrian_position):
     # and ego vehicle position with the ego vehicle's heading vector.
     pedestrian_delta_vector = np.divide(pedestrian_delta_vector, 
                                         pedestrian_distance)
+    print(pedestrian_delta_vector)
     ego_heading_vector = [math.cos(ego_state[2]), 
                             math.sin(ego_state[2])]
 
@@ -76,8 +77,8 @@ def check_for_pedestrian(self, ego_state, pedestrian_position):
 if __name__== "__main__":
 
     # Insert here coordinates to test
-    x_v = 10; y_v = 5; yaw_v = 10
-    x_ped = 15; y_ped = 4
+    x_v = 2; y_v = 1; yaw_v = 0
+    x_ped = 3; y_ped = 7
     #################################
 
     ego_state = [x_v, y_v, yaw_v, 10]
