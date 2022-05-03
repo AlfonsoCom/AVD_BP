@@ -115,24 +115,18 @@ class BehaviouralPlanner:
                 print("traffic light -> ",tl)
                 print("STATUS",status)            
                 if status != GREEN: 
-                    self._id = tl[0]
+                    self._tl_id = tl[0]
                     goal_index = get_stop_wp(waypoints,closest_index,goal_index,tl[1:3])
-                    wp = [ waypoints[goal_index][0], waypoints[goal_index][1],0]
+                    wp = [ waypoints[goal_index][0], waypoints[goal_index][1],0]    
+                    self._state = DECELERATE_TO_STOP
 
 
-            
 
-            #while waypoints[goal_index][2] <= 0.1: goal_index += 1
 
             self._goal_index = goal_index
             self._goal_state = wp
 
-            
-            # # ret = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,50)[1]
-            # # if len(ret)>0:
-            # #     ret = ret[1:]
-            # print("FUNC OUTPUT: ",check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,50))
-            
+        
             
 
         # In this state, check if we have reached a complete stop. Use the
@@ -143,7 +137,6 @@ class BehaviouralPlanner:
             #print("DECELERATE_TO_STOP")
             if self._tl_dict[self._tl_id] == GREEN:
                 self._state = FOLLOW_LANE
-                self._tl_id = None
             elif abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED
 
@@ -160,24 +153,7 @@ class BehaviouralPlanner:
             if self._tl_dict[self._tl_id] == GREEN:
                 self._state = FOLLOW_LANE
                 self._tl_id = None
-            # closest_len, closest_index = get_closest_index(waypoints, ego_state)
-            # goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-            # # while waypoints[goal_index][2] <= 0.1: goal_index += 1
-
-            # # We've stopped for the required amount of time, so the new goal 
-            # # index for the stop line is not relevant. Use the goal index
-            # # that is the lookahead distance away. 
-                            
-            # self._goal_index = goal_index
-            # self._goal_state = waypoints[goal_index]
-
-            # # If the stop sign is no longer along our path, we can now
-            # # transition back to our lane following state.
-            
-            # #if not stop_sign_found: self._state = FOLLOW_LANE
-
-            # self._state = FOLLOW_LANE
-                
+           
         else:
             raise ValueError('Invalid state value.')
 
@@ -480,7 +456,7 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookhaed,looksideways):
     check_sum_90 = np.abs(90-(tl[:,3]+abs(ego_yaw)))<=THRESHOLD_DEGREE
     check_sum_270 = np.abs(270-(tl[:,3]+abs(ego_yaw)))<=THRESHOLD_DEGREE
     check = np.logical_or(check_sum_90,check_sum_270)
-    tl = tl[check]
+    tl = tl[check] # This line allows to filter elements that satisfy "check" condition (that's a boolean array)
     if len(tl) == 0:
         return [] 
 
