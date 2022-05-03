@@ -21,7 +21,7 @@ RED = 2
 RADIUS = 50 # metres
 
 class BehaviouralPlanner:
-    def __init__(self, lookahead, lead_vehicle_lookahead,traffic_lights,tl_dict):
+    def __init__(self, lookahead, lead_vehicle_lookahead,traffic_lights,tl_dict,pedestrian):
         self._lookahead                     = lookahead
         self._follow_lead_vehicle_lookahead = lead_vehicle_lookahead
         self._state                         = FOLLOW_LANE
@@ -34,12 +34,17 @@ class BehaviouralPlanner:
         self._traffic_lights                = traffic_lights
         self._tl_dict                       = tl_dict
         self._tl_id                         = None
+        self._pedestrian                    = pedestrian
 
     def set_lookahead(self, lookahead):
         self._lookahead = lookahead
 
     def set_tl_dict(self,tl_dict):
         self._tl_dict = tl_dict
+
+    def set_pd_dict(self,pd_dict):
+        self._pd_dict = pd_dict
+
     #Handles state transitions and computes the goal state.
     def transition_state(self, waypoints, ego_state, closed_loop_speed):
         """Handles state transitions and computes the goal state.  
@@ -106,7 +111,14 @@ class BehaviouralPlanner:
             for tl in self._traffic_lights:
                 print("TL: ", tl[1:])
            
-            tl = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,self._lookahead,looksideways=3.5)
+
+            ### check pedestrian intersection
+            pd = self._check_pedestrian(ego_state[:2],ego_state[2],self._pd_dict,looksideways_right=2,looksideways_left=4)
+            ###             
+            
+
+
+            tl = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,self._lookahead,looksideways_right=3.5)
 
             status = None
             wp = [ waypoints[goal_index][0], waypoints[goal_index][1],waypoints[goal_index][2]]
@@ -348,7 +360,7 @@ def get_stop_wp(waypoints, closest_index,goal_index,traffic_light_pos):
     return goal_index
 
 
-def compute_bb_verteces_parametrics(p,a,b,p_orientation,sign_x1=1,sign_y1=1,sign_x2=1,sign_y2=1):
+def compute_bb_verteces_parametrics(p,a,p_orientation,b,b1 = None,sign_x1=1,sign_y1=1,sign_x2=1,sign_y2=1):
     """
         Computes other three bounding box verteces (p1,p2,p3) useful to detect traffic
         light. 
@@ -375,6 +387,10 @@ def compute_bb_verteces_parametrics(p,a,b,p_orientation,sign_x1=1,sign_y1=1,sign
     # p0 and p2 is the same between p1 and p3. 
     p3 = [p1[0] + sign_x2 * x_temp, p1[1] + sign_y2 * y_temp] 
 
+    if b1 != None:
+        x_temp = b1 * math.cos(p_orientation) 
+        y_temp = b1 * math.sin(p_orientation)
+
     # Compute p4 (alias C) that is the opposite of p3 respect p1 (alias C1)
     p4 = [p1[0] - sign_x2 * x_temp, p1[1] - sign_y2 * y_temp] 
 
@@ -383,51 +399,65 @@ def compute_bb_verteces_parametrics(p,a,b,p_orientation,sign_x1=1,sign_y1=1,sign
 
     return p2,p3,p4,p5 # A,B,C,D
 
-def compute_bb_verteces(p,a,b,p_orientation):
+def compute_bb_verteces(p,a,p_orientation,b,b1=None):
     """
-    Computes other three bounding box verteces (p1,p2,p3) useful to detect traffic
+    Computes  four bounding box verteces (A,B,C,D).
+    Bounding box rapresentation:   
+
+        D-----------C
+        |           |    
+        p           p1
+        |           |
+        |           |
+        A-----------B
+
     light params:
-        p is a bounding box vertex that coincides with car center.
-        a lenght of longest bounding box side
-        b lenght of shortest bounding box side
+        p is a point on segment AD.
+        a lenght of longest bounding box side (segment DC or AB)
+        b lenght of segment pA (or p1B)
+        b1 lenght of segment pD (or p1C)
         p_orientation car orientation 
     """
 
-    # p_orientation = p_orientation*math.pi/180
+    # p_orientation = p_orientation*pi/180
 
     if p_orientation >= 0 and p_orientation <= math.pi/2:
         p_orientation = math.pi/2 - p_orientation
-        return compute_bb_verteces_parametrics(p,a,b,p_orientation,sign_x2=-1)
+        return compute_bb_verteces_parametrics(p,a,p_orientation,b,b1,sign_x2=-1)
 
     elif p_orientation > math.pi/2 and p_orientation <= math.pi:
         p_orientation = p_orientation - math.pi/2 
-        return compute_bb_verteces_parametrics(p,a,b,p_orientation,sign_x1=-1,sign_x2=-1,sign_y2=-1)
+        return compute_bb_verteces_parametrics(p,a,p_orientation,b,b1,sign_x1=-1,sign_x2=-1,sign_y2=-1)
 
     elif p_orientation >= - math.pi and p_orientation <= -math.pi/2:
         p_orientation = abs(p_orientation)-math.pi/2
-        return compute_bb_verteces_parametrics(p,a,b,p_orientation, sign_x1=-1,sign_y1=-1,sign_y2=-1)
+        return compute_bb_verteces_parametrics(p,a,p_orientation,b,b1, sign_x1=-1,sign_y1=-1,sign_y2=-1)
 
     elif p_orientation > - math.pi/2 and p_orientation < 0:
         p_orientation = math.pi/2 - abs(p_orientation)
-        return compute_bb_verteces_parametrics(p,a,b,p_orientation,sign_y1=-1)
+        return compute_bb_verteces_parametrics(p,a,p_orientation,b,b1,sign_y1=-1)
 
-
-def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookhaed,looksideways):
+def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_right,looksideways_left=None):
     """
     Checks if a traffic_light is in car trajectory.
     params:
         ego_pos: List([x,y]) 
-        ego_yaw: -pi to pi
+        ego_yaw: angle -pi to pi
         traffic_lights: np.array([id,x,y,yaw],...)
+        lookahead: ahead view of veichle
+        looksideways_right: right lateral view of vehicle
+        looksideways_left: left lateral view of vehicle
+
     return:
-        int: id of the nearest traffic_light 
+        int: if detected return traffic light info as list, else empty list
     """
 
     #STEP 1 check traffic_light is in bounding box
     
     # center_point = Point(ego_pos)
-    A,B,C,D = compute_bb_verteces(ego_pos,lookhaed,looksideways,ego_yaw)
-    print("LOOKHAED:",lookhaed)
+        
+    A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
+    print("LOOKAHEAD:",lookahead)
     print(f"A:{A},B:{B},C:{C},D:{D}")
     bb = Polygon([A,B,C,D,A])
     n_tl = len(traffic_lights)

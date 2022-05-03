@@ -39,7 +39,7 @@ from carla.planner.city_track import CityTrack
 ###############################################################################
 PLAYER_START_INDEX = 148   #91        #  spawn index for player
 DESTINATION_INDEX =  61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
+NUM_PEDESTRIANS        = 30     # total number of pedestrians to spawn
 NUM_VEHICLES           = 1    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
@@ -696,6 +696,7 @@ def exec_waypoint_nav_demo(args):
 
         nearest_tl = []
         tl_dict = {}
+        pd_dict = {}
         for i,tl in enumerate(traffic_lights):
             # compute distances vector between waypoints and current traffic light
             temp = waypoints[:,:2] - tl[1:3]
@@ -803,7 +804,8 @@ def exec_waypoint_nav_demo(args):
         bp = behavioural_planner.BehaviouralPlanner(BP_LOOKAHEAD_BASE,
                                                     LEAD_VEHICLE_LOOKAHEAD,
                                                     nearest_tl,
-                                                    tl_dict)
+                                                    tl_dict,
+                                                    pd_dict)
 
         #############################################
         # Scenario Execution Loop
@@ -823,16 +825,29 @@ def exec_waypoint_nav_demo(args):
         prev_collision_pedestrians = 0
         prev_collision_other       = 0
 
+        
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
 
             # update traffic_lights status
             for agent in measurement_data.non_player_agents:
-                if agent.id in tl_dict:
-                    tl_dict[agent.id] = agent.traffic_light.state
+                if agent.HasField("traffic_light"):
+                    if agent.id in tl_dict:
+                        tl_dict[agent.id] = agent.traffic_light.state
+                if agent.HasField("pedestrian"):
+                    id = agent.id
+                    location = agent.pedestrian.transform.location
+                    dimensions = agent.pedestrian.bounding_box.extent
+                    orientation = agent.pedestrian.transform.rotation
+                    bb = obstacle_to_world(location, dimensions, orientation)
+                    #takes only verteces of pedestrains bb
+                    bb = bb[0:-1:2]
+                    pd_dict[id] = bb
+
 
             bp.set_tl_dict(tl_dict)
+            bp.set_pd_dict(pd_dict)
             
             # UPDATE HERE the obstacles list
             obstacles = []
