@@ -1,6 +1,7 @@
 import numpy as np, math
 
 PEDESTRIAN_MAX_DISTANCE = 10
+PEDESTRIAN_MIN_SPEED = 0.05
 
 # Distance respect to pedestrian at the left while the ego vehicle isn't turning.
 PEDESTRIAN_REDUCED_DISTANCE = 5
@@ -30,6 +31,11 @@ def check_for_pedestrian(self, ego_state, pedestrian_state):
             in proximity of the ego car.
     """
 
+    # Check if pedestrian is stopped. In this case, you don't consider it.
+    ped_forward_speed = pedestrian_state[3]
+    if ped_forward_speed < PEDESTRIAN_MIN_SPEED:
+        return False 
+
     # Check pedestrian position delta vector relative to heading, as well as
     # distance, to determine if there is a pedestrian.
     pedestrian_delta_vector = [(pedestrian_state[0] - ego_state[0]), 
@@ -55,9 +61,7 @@ def check_for_pedestrian(self, ego_state, pedestrian_state):
     # (if cosine of relative angle is negative, it doesn't lies in that range).
     if cos < 0:
         return False
-    else:
-        return True
-
+    
     '''
     # Check whether the ego vehicle is turning or not 
     # (if yaw lies within +/- 15 degrees respect the way the car is turning, else not)
@@ -83,15 +87,32 @@ def check_for_pedestrian(self, ego_state, pedestrian_state):
             return True
     '''
 
+    # Check if the pedestrian is at a perpendicular direction respect to the direction of the car 
+    ped_yaw = pedestrian_state[2]
+    ped_heading_vector = [np.cos(ped_yaw), np.sin(ped_yaw)]
+
+    # cos(a-b) = cos(a)cos(b) + sin(a)sin(b)
+    cos = np.dot(ped_heading_vector, ego_heading_vector)
+
+    # sin(a-b) = sin(a)cos(b) - cos(a)sin(b)
+    sin = np.dot(ped_heading_vector, [-ego_heading_vector[1], -ego_heading_vector[0]])
+    
+    # Check if this angle is about 90 degrees
+    if sin >= 0.98:
+        return True  
+        
+    return False
+
+
 if __name__== "__main__":
 
     # Insert here coordinates to test
-    x_v = 8; y_v = 0; yaw_v = math.pi
-    x_ped = 10; y_ped = 8
+    x_v = 3; y_v = 8; yaw_v = 0
+    x_ped = 8; y_ped = 3; yaw_ped = math.pi/2; speed_ped = 1
     #################################
 
     ego_state = [x_v, y_v, yaw_v, 10]
-    pedestrian_state = [x_ped, y_ped]
+    pedestrian_state = [x_ped, y_ped, yaw_ped, speed_ped]
 
     if check_for_pedestrian(None, ego_state, pedestrian_state):
         print("STOP")
