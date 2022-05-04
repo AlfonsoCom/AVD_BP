@@ -880,7 +880,7 @@ def exec_waypoint_nav_demo(args):
                     
                     dist = np.subtract([current_x,current_y], [location.x,location.y])
                     norm = np.linalg.norm(dist)
-                    # filter only pedestrian that are in a radiud of 30 metres
+                    # filter only pedestrian that are in a radius of 30 metres
                     if norm < 30:
                         bb = obstacle_to_world(location, dimensions, orientation)
                         #takes only verteces of pedestrians bb
