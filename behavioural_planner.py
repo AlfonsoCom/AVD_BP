@@ -523,21 +523,22 @@ def compute_point_along_direction(start_point,direction,distance):
                     new_point <----------------- start_point
                                  direction = - pi
     """
+    p_orientation = direction
     if p_orientation >= 0 and p_orientation <= math.pi/2:
         p_orientation = math.pi/2 - p_orientation
-        return compute_point_along_direction_parametric(start_point,direction,distance)
+        return compute_point_along_direction_parametric(start_point,p_orientation,distance)
 
     elif p_orientation > math.pi/2 and p_orientation <= math.pi:
         p_orientation = p_orientation - math.pi/2 
-        return compute_point_along_direction_parametric(start_point,direction,distance,sign_x=-1)
+        return compute_point_along_direction_parametric(start_point,p_orientation,distance,sign_x=-1)
 
     elif p_orientation >= - math.pi and p_orientation <= -math.pi/2:
         p_orientation = abs(p_orientation)-math.pi/2
-        return compute_point_along_direction_parametric(start_point,direction,distance, sign_x1=-1,sign_y1=-1)
+        return compute_point_along_direction_parametric(start_point,p_orientation,distance, sign_x1=-1,sign_y1=-1)
 
     elif p_orientation > - math.pi/2 and p_orientation < 0:
         p_orientation = math.pi/2 - abs(p_orientation)
-        return compute_point_along_direction_parametric(start_point,direction,distance,sign_y=-1)
+        return compute_point_along_direction_parametric(start_point,p_orientation,distance,sign_y=-1)
 
 def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideways_right,looksideways_left):
     
@@ -589,12 +590,15 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             distance = (i+1)*distance_along_car_direction
             next_car_center = compute_point_along_direction(ego_pos,ego_yaw,distance)
             # compute new car bounding_box
-            A,B,C,D = compute_bb_verteces(next_car_center,distance,ego_yaw,looksideways_right=1.5,looksideways_left=1.5)
+            A,B,C,D = compute_bb_verteces(next_car_center,distance,ego_yaw,b=1.5,b1=1.5)
             bb = Polygon([A,B,C,D,A])
         
             
             for pd in pds:
-                distance_along_pedestrian_direction = pd[-1] * delta_t*(i+1)
+                for c, elem in enumerate(pd):
+                    print("pd", c, elem)
+                distance_along_pedestrian_direction = pd[3] * delta_t*(i+1)
+                print("distance_along_pedestrian_direction", distance_along_pedestrian_direction)
                 # get bounding box in time t and from this computes new bounding box 
                 pedestrian_bb = pd[0]
                 pedestrian_orientation = pd[2]
@@ -613,11 +617,3 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             car_stop_position = next_car_center
 
     return pedestrian_collisioned, car_stop_position
-    
-
-        
-        
-            
-        
-            
-        
