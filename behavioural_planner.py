@@ -546,25 +546,30 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
     bb = Polygon([A,B,C,D,A])
     
+    # numpy array pedestrians
+    pds  = np.array(list(pedestrians.values())) 
 
-    for id in pedestrians:
+    pds_boolean = pds == None
+
+    for i,pd in enumerate(pds):
         flag = False
         # get pedestrian bb
-        pedestrian_bb_verteces = pedestrians[id][0]
+        pedestrian_bb_verteces = pd[0]
         for bb_vertex in pedestrian_bb_verteces:
             vertex = Point(bb_vertex)
             if bb.contains(vertex):
                 flag=True
+                pds_boolean[i] = True
                 break
-        # if no vertices are in bb delete pedestrian info
-        if not flag:
-            del pedestrians[id]
+      
+    # considered only pedestrians inside bounding box
+    pds = pds[pds_boolean]
 
     pedestrian_collisioned = False 
 
     car_stop_position = ego_pos
 
-    if ego_speed < STOP_THRESHOLD and len(pedestrians)!=0:
+    if ego_speed < STOP_THRESHOLD and len(pds)!=0:
         return True, []
 
 
@@ -588,11 +593,11 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             bb = Polygon([A,B,C,D,A])
         
             
-            for id in pedestrians:
-                distance_along_pedestrian_direction = pedestrians[id][-1] * delta_t*(i+1)
+            for pd in pds:
+                distance_along_pedestrian_direction = pd[-1] * delta_t*(i+1)
                 # get bounding box in time t and from this computes new bounding box 
-                pedestrian_bb = pedestrians[id][0]
-                pedestrian_orientation = pedestrians[id][2]
+                pedestrian_bb = pd[0]
+                pedestrian_orientation = pd[2]
                 for bb_vertex in pedestrian_bb:
                     new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,distance_along_pedestrian_direction)
                     point = Point(new_vertex)
