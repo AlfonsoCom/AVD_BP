@@ -39,9 +39,9 @@ from carla.planner.city_track import CityTrack
 ###############################################################################
 PLAYER_START_INDEX = 148   #91        #  spawn index for player
 DESTINATION_INDEX =  61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 30     # total number of pedestrians to spawn
+NUM_PEDESTRIANS        = 100000     # total number of pedestrians to spawn
 NUM_VEHICLES           = 1    # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
+SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
 ###############################################################################àà
 
@@ -836,16 +836,21 @@ def exec_waypoint_nav_demo(args):
                     if agent.id in tl_dict:
                         tl_dict[agent.id] = agent.traffic_light.state
                 if agent.HasField("pedestrian"):
+                    pedestrian_info = []
                     id = agent.id
                     location = agent.pedestrian.transform.location
                     dimensions = agent.pedestrian.bounding_box.extent
                     orientation = agent.pedestrian.transform.rotation
                     bb = obstacle_to_world(location, dimensions, orientation)
-                    #takes only verteces of pedestrains bb
+                    #takes only verteces of pedestrians bb
                     bb = bb[0:-1:2]
-                    pd_dict[id] = bb
+                    pedestrian_info.append(bb)
+                    pedestrian_info.append([location.x,location.y])
+                    pedestrian_info.append(orientation.yaw)
+                    pedestrian_info.append(agent.pedestrian.forward_speed)
+                    pd_dict[id] = pedestrian_info
 
-
+            # set current info about traffic light (status) and pedestrian 
             bp.set_tl_dict(tl_dict)
             bp.set_pd_dict(pd_dict)
             
