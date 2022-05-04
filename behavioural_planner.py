@@ -564,7 +564,12 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
                 break
       
     # considered only pedestrians inside bounding box
+    '''print("pds before", pds.shape,'\n', pds)
     pds = pds[pds_boolean]
+    print("pds after", pds.shape,'\n', pds)'''
+
+    if pds.shape == (4,):
+        pds = pds.reshape((1,4))
 
     pedestrian_collisioned = False 
 
@@ -595,15 +600,17 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
         
             
             for pd in pds:
-                for c, elem in enumerate(pd):
-                    print("pd", c, elem)
+                '''for c, elem in enumerate(pd):
+                    print("pd", c, elem)'''
                 distance_along_pedestrian_direction = pd[3] * delta_t*(i+1)
                 print("distance_along_pedestrian_direction", distance_along_pedestrian_direction)
                 # get bounding box in time t and from this computes new bounding box 
                 pedestrian_bb = pd[0]
+                print("pedestrian_bb", pedestrian_bb)
                 pedestrian_orientation = pd[2]
                 for bb_vertex in pedestrian_bb:
                     new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,distance_along_pedestrian_direction)
+                    print("new_vertex", new_vertex)
                     point = Point(new_vertex)
                     if bb.contains(point):
                         pedestrian_collisioned = True
