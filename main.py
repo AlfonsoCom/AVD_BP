@@ -830,29 +830,7 @@ def exec_waypoint_nav_demo(args):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
 
-            # update traffic_lights status
-            for agent in measurement_data.non_player_agents:
-                if agent.HasField("traffic_light"):
-                    if agent.id in tl_dict:
-                        tl_dict[agent.id] = agent.traffic_light.state
-                if agent.HasField("pedestrian"):
-                    pedestrian_info = []
-                    id = agent.id
-                    location = agent.pedestrian.transform.location
-                    dimensions = agent.pedestrian.bounding_box.extent
-                    orientation = agent.pedestrian.transform.rotation
-                    bb = obstacle_to_world(location, dimensions, orientation)
-                    #takes only verteces of pedestrians bb
-                    bb = bb[0:-1:2]
-                    pedestrian_info.append(bb)
-                    pedestrian_info.append([location.x,location.y])
-                    pedestrian_info.append(orientation.yaw)
-                    pedestrian_info.append(agent.pedestrian.forward_speed)
-                    pd_dict[id] = pedestrian_info
-
-            # set current info about traffic light (status) and pedestrian 
-            bp.set_tl_dict(tl_dict)
-            bp.set_pd_dict(pd_dict)
+            
             
             # UPDATE HERE the obstacles list
             obstacles = []
@@ -887,6 +865,36 @@ def exec_waypoint_nav_demo(args):
                                                  prev_collision_pedestrians,
                                                  prev_collision_other)
             collided_flag_history.append(collided_flag)
+
+
+            # update traffic_lights status
+            pedestrians = []
+            for agent in measurement_data.non_player_agents:
+                if agent.HasField("traffic_light"):
+                    if agent.id in tl_dict:
+                        tl_dict[agent.id] = agent.traffic_light.state
+                if agent.HasField("pedestrian"):
+                    location = agent.pedestrian.transform.location
+                    dimensions = agent.pedestrian.bounding_box.extent
+                    orientation = agent.pedestrian.transform.rotation
+                    
+                    dist = np.subtract([current_x,current_y], [location.x,location.y])
+                    norm = np.linalg.norm(dist)
+                    # filter only pedestrian that are in a radiud of 30 metres
+                    if norm < 30:
+                        bb = obstacle_to_world(location, dimensions, orientation)
+                        #takes only verteces of pedestrians bb
+                        bb = bb[0:-1:2]
+                        pedestrians.append([bb,
+                                            [location.x,location.y],
+                                            orientation.yaw,
+                                            agent.pedestrian.forward_speed])
+            
+            pedestrians = np.array(pedestrians)
+
+            # set current info about traffic light (status) and pedestrian 
+            bp.set_tl_dict(tl_dict)
+            bp.set_pedestrians(pedestrians)
 
             camera_data = sensor_data.get('CameraRGB', None)
             if camera_data is not None:
