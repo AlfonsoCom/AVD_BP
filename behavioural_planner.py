@@ -596,8 +596,8 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
 
 
     
-    if pds.shape == (4,):
-        pds = pds.reshape((1,4))
+    if len(pds)!=0:
+        pds = pds.reshape((-1,4))
 
     print("[BP.CHECK_PEDESTRIAN] pds.shape ->",pds.shape)
 
