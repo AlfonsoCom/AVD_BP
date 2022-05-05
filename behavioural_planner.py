@@ -570,8 +570,8 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     pd_position  = []
     pd_speed = None
     pd_orientation = None
+    flag = False
     for i,pd in enumerate(pds):
-        flag = False
         # get pedestrian bb
         pedestrian_bb_verteces = pd[0]
         
