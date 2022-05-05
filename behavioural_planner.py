@@ -113,14 +113,15 @@ class BehaviouralPlanner:
            
 
             ### check pedestrian intersection
-            collisioned, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=3,looksideways_left=4)
+            collisioned, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
+                self._pedestrians,self._lookahead,looksideways_right=3,looksideways_left=4)
             
             wp = [ waypoints[goal_index][0], waypoints[goal_index][1],waypoints[goal_index][2]]
 
             if collisioned:
                 if closed_loop_speed > STOP_THRESHOLD:
                     goal_index = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
-                wp[2] = 0 
+                wp = [ waypoints[goal_index][0],waypoints[goal_index][1],0] 
                 self._state = DECELERATE_TO_STOP
             else:            
                 tl = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,self._lookahead,looksideways_right=3.5)
@@ -130,7 +131,7 @@ class BehaviouralPlanner:
                     if status != GREEN: 
                         self._tl_id = tl[0]
                         goal_index = get_stop_wp(waypoints,closest_index,goal_index,tl[1:3])
-                        wp[2] = 0
+                        wp = [ waypoints[goal_index][0],waypoints[goal_index][1],0]
                         self._state = DECELERATE_TO_STOP
 
 
@@ -159,7 +160,7 @@ class BehaviouralPlanner:
             wp = [ waypoints[goal_index][0],waypoints[goal_index][1],waypoints[goal_index][2]]
             if collisioned:
                 goal_index = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
-                wp[2] = 0
+                wp = [ waypoints[goal_index][0],waypoints[goal_index][1],0]
                 self._goal_index = goal_index
                 self._goal_state = wp
             else:
@@ -579,7 +580,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             
             vertex = Point(bb_vertex)
             if bb.contains(vertex):
-                flag=True
+                flag = True
                 pds_boolean[i] = True
                 pd_position = pd[1]
                 pd_speed = pd[-1]
@@ -652,5 +653,6 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             if pedestrian_collided:
                 break
             car_stop_position = next_car_center
+    
 
-    return pedestrian_collided, car_stop_position
+    return flag, car_stop_position
