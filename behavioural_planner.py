@@ -151,6 +151,7 @@ class BehaviouralPlanner:
             if abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED
                 return
+
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
             collisioned, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=2,looksideways_left=4)
@@ -164,8 +165,13 @@ class BehaviouralPlanner:
                 try:
                     if self._tl_dict[self._tl_id] == GREEN:
                         self._state = FOLLOW_LANE
-                except:
-                    pass # means that no traffic light is chcecked
+                        self._tl_id = None
+                except KeyError:
+                    # if no traffic light are previusly detected so 
+                    # the next state will be follow lane because there are
+                    # neither pedestrians and traffic light
+                    self._state = FOLLOW_LANE
+                    # means that no traffic light is chcecked
             
 
         # In this state, check to see if we have stayed stopped for at
@@ -594,7 +600,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
 
     print("[BP.CHECK_PEDESTRIAN] pds.shape ->",pds.shape)
 
-    pedestrian_collisioned = False 
+    pedestrian_collided = False 
 
     car_stop_position = ego_pos
 
@@ -624,7 +630,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             A,B,C,D = compute_bb_verteces(next_car_center,distance,ego_yaw,b=1.5,b1=1.5)
             bb = Polygon([A,B,C,D,A])
         
-            
+            # (4,) [list,[x,y],speed,yaw]
             for pd in pds:
                 
                 #print("[BP.CHECK_PEDESTRIAN] pd velocity ",pd[3])
@@ -637,14 +643,13 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
                     new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,distance_along_pedestrian_direction)
                     point = Point(new_vertex)
                     if bb.contains(point):
-                        pedestrian_collisioned = True
-                        #pedestrian_collisioned = id
+                        pedestrian_collided = True
                         break
-                if pedestrian_collisioned:
+                if pedestrian_collided:
                     break
                 
-            if pedestrian_collisioned:
+            if pedestrian_collided:
                 break
             car_stop_position = next_car_center
 
-    return pedestrian_collisioned, car_stop_position
+    return pedestrian_collided, car_stop_position
