@@ -112,14 +112,14 @@ class BehaviouralPlanner:
            
 
             ### check pedestrian intersection
-            collisioned, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=2,looksideways_left=4)
+            collisioned, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=3,looksideways_left=4)
             
             wp = [ waypoints[goal_index][0], waypoints[goal_index][1],waypoints[goal_index][2]]
 
             if collisioned:
                 if closed_loop_speed > STOP_THRESHOLD:
                     goal_index = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
-                wp = [ waypoints[goal_index][0], waypoints[goal_index][1],0] 
+                wp[2] = 0 
                 self._state = DECELERATE_TO_STOP
             else:            
                 tl = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,self._lookahead,looksideways_right=3.5)
@@ -129,7 +129,7 @@ class BehaviouralPlanner:
                     if status != GREEN: 
                         self._tl_id = tl[0]
                         goal_index = get_stop_wp(waypoints,closest_index,goal_index,tl[1:3])
-                        wp = [ waypoints[goal_index][0], waypoints[goal_index][1],0]    
+                        wp[2] = 0
                         self._state = DECELERATE_TO_STOP
 
 
@@ -154,11 +154,11 @@ class BehaviouralPlanner:
 
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-            collisioned, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=2,looksideways_left=4)
-            wp = [ waypoints[goal_index][0], waypoints[goal_index][1],waypoints[goal_index][2]]
+            collisioned, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=3,looksideways_left=4)
+            wp = [ waypoints[goal_index][0],waypoints[goal_index][1],waypoints[goal_index][2]]
             if collisioned:
                 goal_index = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
-                wp = [ waypoints[goal_index][0], waypoints[goal_index][1],0] 
+                wp[2] = 0
                 self._goal_index = goal_index
                 self._goal_state = wp
             else:
@@ -178,7 +178,7 @@ class BehaviouralPlanner:
         # least STOP_COUNTS number of cycles. If so, we can now leave
         # the stop sign and transition to the next state.
         elif self._state == STAY_STOPPED:
-            check_pedestrian_collision, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=self._lookahead,looksideways_right=2,looksideways_left=4)
+            check_pedestrian_collision, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=self._lookahead,looksideways_right=3,looksideways_left=4)
             print("[BP.TRANSITION_STATE.STAY_STOPPED] Check pedestrian",check_pedestrian_collision)
 
             traffic_light_condition = True if self._tl_id is None else self._tl_dict[self._tl_id] == GREEN
