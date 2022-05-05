@@ -34,6 +34,12 @@ from carla.image_converter import labels_to_array, depth_to_array, to_bgra_array
 from carla.planner.city_track import CityTrack
 
 
+SERVER_HOST = "193.205.163.183"
+SERVER_PORT = 6018
+
+LOCAL_HOST = "localhost"
+LOCAL_PORT = 2000
+
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
@@ -398,10 +404,10 @@ def make_correction(waypoint,previuos_waypoint,desired_speed):
     waypoint_on_lane[2] = desired_speed
 
     return waypoint_on_lane
-def exec_waypoint_nav_demo(args):
+def exec_waypoint_nav_demo(args, host, port):
     """ Executes waypoint navigation demo.
     """
-    with make_carla_client(args.host, args.port) as client:
+    with make_carla_client(host, port) as client:
         print('Carla client connected.')
 
         settings = make_carla_settings(args)
@@ -1142,16 +1148,21 @@ def main():
         dest='debug',
         help='print debug information')
     argparser.add_argument(
-        '--host',
-        metavar='H',
-        default='localhost',
-        help='IP of the host server (default: localhost)')
-    argparser.add_argument(
-        '-p', '--port',
-        metavar='P',
-        default=2000,
-        type=int,
-        help='TCP port to listen to (default: 2000)')
+        '--local', '-l',
+        action='store_true',
+        dest = 'local'
+    )
+    # argparser.add_argument(
+    #     '--host',
+    #     metavar='H',
+    #     default='localhost',
+    #     help='IP of the host server (default: localhost)')
+    # argparser.add_argument(
+    #     '-p', '--port',
+    #     metavar='P',
+    #     default=2000,
+    #     type=int,
+    #     help='TCP port to listen to (default: 2000)')
     argparser.add_argument(
         '-a', '--autopilot',
         action='store_true',
@@ -1173,14 +1184,19 @@ def main():
     # Logging startup info
     log_level = logging.DEBUG if args.debug else logging.INFO
     logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
-    logging.info('listening to server %s:%s', args.host, args.port)
+    if not args.local:
+        host = SERVER_HOST; port = SERVER_PORT
+    else:
+        host = LOCAL_HOST; port = LOCAL_PORT
+    
+    logging.info('listening to server %s:%s', host, port)
 
     args.out_filename_format = '_out/episode_{:0>4d}/{:s}/{:0>6d}'
 
     # Execute when server connection is established
     while True:
         try:
-            exec_waypoint_nav_demo(args)
+            exec_waypoint_nav_demo(args, host, port)
             print('Done.')
             return
 
