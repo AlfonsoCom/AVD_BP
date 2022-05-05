@@ -7,8 +7,10 @@ from shapely.geometry import Point, Polygon
 FOLLOW_LANE = 0
 DECELERATE_TO_STOP = 1
 STAY_STOPPED = 2
+
+STATES = ["FOLLOW_LANE","DECELERATE_TO_STOP","STAY_STOPPED"]
 # Stop speed threshold
-STOP_THRESHOLD = 0.2
+STOP_THRESHOLD = 0.05
 # Number of cycles before moving from stop sign.
 STOP_COUNTS = 10
 
@@ -21,7 +23,7 @@ RED = 2
 RADIUS = 50 # metres
 
 class BehaviouralPlanner:
-    def __init__(self, lookahead, lead_vehicle_lookahead,traffic_lights,tl_dict,pedestrians):
+    def __init__(self, lookahead, lead_vehicle_lookahead,traffic_lights,tl_dict,pedestrians=[]):
         self._lookahead                     = lookahead
         self._follow_lead_vehicle_lookahead = lead_vehicle_lookahead
         self._state                         = FOLLOW_LANE
@@ -97,8 +99,8 @@ class BehaviouralPlanner:
         # Make sure that get_closest_index() and get_goal_index() functions are
         # complete, and examine the check_for_stop_signs() function to
         # understand it.
+        print("\n[BP.TRANSITION_STATE] CURRENT STATE -> " ,STATES[self._state])
         if self._state == FOLLOW_LANE:
-            #print("FOLLOW_LANE")
             # First, find the closest index to the ego vehicle.
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
             
@@ -106,10 +108,7 @@ class BehaviouralPlanner:
             # along the waypoints.
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
 
-            # print("\n")
-            # print("\tx\ty\tyaw")
-            # for tl in self._traffic_lights:
-            #     print("TL: ", tl[1:])
+           
            
 
             ### check pedestrian intersection
@@ -118,7 +117,8 @@ class BehaviouralPlanner:
             wp = [ waypoints[goal_index][0], waypoints[goal_index][1],waypoints[goal_index][2]]
 
             if collisioned:
-                goal_index = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
+                if closed_loop_speed > STOP_THRESHOLD:
+                    goal_index = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 wp = [ waypoints[goal_index][0], waypoints[goal_index][1],0] 
                 self._state = DECELERATE_TO_STOP
             else:            
@@ -150,7 +150,6 @@ class BehaviouralPlanner:
             if abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED
                 return
-            #print("DECELERATE_TO_STOP")
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
             collisioned, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=2,looksideways_left=4)
@@ -161,16 +160,22 @@ class BehaviouralPlanner:
                 self._goal_index = goal_index
                 self._goal_state = wp
             else:
-                if self._tl_dict[self._tl_id] == GREEN:
-                    self._state = FOLLOW_LANE
+                try:
+                    if self._tl_dict[self._tl_id] == GREEN:
+                        self._state = FOLLOW_LANE
+                except:
+                    pass # means that no traffic light is chcecked
             
 
         # In this state, check to see if we have stayed stopped for at
         # least STOP_COUNTS number of cycles. If so, we can now leave
         # the stop sign and transition to the next state.
         elif self._state == STAY_STOPPED:
-            check_pedestrian_collision, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=2,looksideways_left=4)
-            if not check_pedestrian_collision and self._tl_dict[self._tl_id] == GREEN:
+            check_pedestrian_collision, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=self._lookahead,looksideways_right=2,looksideways_left=4)
+            print("[BP.TRANSITION_STATE.STAY_STOPPED] Check pedestrian",check_pedestrian_collision)
+
+            traffic_light_condition = True if self._tl_id is None else self._tl_dict[self._tl_id] == GREEN
+            if not check_pedestrian_collision and traffic_light_condition:
                 self._state = FOLLOW_LANE
                 # if status equal to green
                 self._tl_id = None
@@ -468,8 +473,6 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     # center_point = Point(ego_pos)
         
     A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
-    print("LOOKAHEAD:",lookahead)
-    print(f"A:{A},B:{B},C:{C},D:{D}")
     bb = Polygon([A,B,C,D,A])
     n_tl = len(traffic_lights)
     index_tl_in_bb = np.array(np.zeros((n_tl,)),dtype=bool)
@@ -481,7 +484,7 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     # check if there is at least one traffic light
 
     tl = traffic_lights[index_tl_in_bb]
-    print(tl)
+   
     if len(tl)==0:
         return []
     # STEP 2 check if car orientation is opposite to traffic lights orientation
@@ -534,7 +537,7 @@ def compute_point_along_direction(start_point,direction,distance):
 
     elif p_orientation >= - math.pi and p_orientation <= -math.pi/2:
         p_orientation = abs(p_orientation)-math.pi/2
-        return compute_point_along_direction_parametric(start_point,p_orientation,distance, sign_x1=-1,sign_y1=-1)
+        return compute_point_along_direction_parametric(start_point,p_orientation,distance, sign_x=-1,sign_y=-1)
 
     elif p_orientation > - math.pi/2 and p_orientation < 0:
         p_orientation = math.pi/2 - abs(p_orientation)
@@ -542,40 +545,59 @@ def compute_point_along_direction(start_point,direction,distance):
 
 def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideways_right,looksideways_left):
     
+    if len(pedestrians)==0:
+        return False,[]
 
     # Step 1 filter pedetrians in bb
     A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
     bb = Polygon([A,B,C,D,A])
     
+    print("[BP.CHECK_PEDESTRIANS] ego (x,y,teta): ", ego_pos,ego_yaw)
     # numpy array pedestrians
     pds  = pedestrians
-
     pds_boolean = pds == None
-
+    pd_position  = []
+    pd_speed = None
+    pd_orientation = None
     for i,pd in enumerate(pds):
         flag = False
         # get pedestrian bb
         pedestrian_bb_verteces = pd[0]
+        
+
         for bb_vertex in pedestrian_bb_verteces:
+            
             vertex = Point(bb_vertex)
             if bb.contains(vertex):
                 flag=True
                 pds_boolean[i] = True
+                pd_position = pd[1]
+                pd_speed = pd[-1]
+                pd_orientation = pd[2]
                 break
+        
       
     # considered only pedestrians inside bounding box
-    '''print("pds before", pds.shape,'\n', pds)
     pds = pds[pds_boolean]
-    print("pds after", pds.shape,'\n', pds)'''
+ 
+    print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_position ->",pd_position)
+    print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_speed ->",pd_speed)
+    print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_orientation ->",pd_orientation)
 
+
+    
     if pds.shape == (4,):
         pds = pds.reshape((1,4))
+
+    print("[BP.CHECK_PEDESTRIAN] pds.shape ->",pds.shape)
 
     pedestrian_collisioned = False 
 
     car_stop_position = ego_pos
 
     if ego_speed < STOP_THRESHOLD and len(pds)!=0:
+       # print("pds",pds)
+        #print("Pedestrian position",pd_position)
         return True, []
 
 
@@ -593,6 +615,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
         for i in range(N_FRAMES):
             # compute new car center according frames already computed and delta t 
             distance = (i+1)*distance_along_car_direction
+            
             next_car_center = compute_point_along_direction(ego_pos,ego_yaw,distance)
             # compute new car bounding_box
             A,B,C,D = compute_bb_verteces(next_car_center,distance,ego_yaw,b=1.5,b1=1.5)
@@ -600,17 +623,15 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
         
             
             for pd in pds:
-                '''for c, elem in enumerate(pd):
-                    print("pd", c, elem)'''
+                
+                #print("[BP.CHECK_PEDESTRIAN] pd velocity ",pd[3])
                 distance_along_pedestrian_direction = pd[3] * delta_t*(i+1)
-                print("distance_along_pedestrian_direction", distance_along_pedestrian_direction)
                 # get bounding box in time t and from this computes new bounding box 
                 pedestrian_bb = pd[0]
-                print("pedestrian_bb", pedestrian_bb)
+                
                 pedestrian_orientation = pd[2]
                 for bb_vertex in pedestrian_bb:
                     new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,distance_along_pedestrian_direction)
-                    print("new_vertex", new_vertex)
                     point = Point(new_vertex)
                     if bb.contains(point):
                         pedestrian_collisioned = True

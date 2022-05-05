@@ -37,8 +37,8 @@ from carla.planner.city_track import CityTrack
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 148   #91        #  spawn index for player
-DESTINATION_INDEX =  61   #142      # Setting a Destination HERE
+PLAYER_START_INDEX = 89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 10000     # total number of pedestrians to spawn
 NUM_VEHICLES           = 1    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
@@ -696,7 +696,6 @@ def exec_waypoint_nav_demo(args):
 
         nearest_tl = []
         tl_dict = {}
-        pd_dict = {}
         for i,tl in enumerate(traffic_lights):
             # compute distances vector between waypoints and current traffic light
             temp = waypoints[:,:2] - tl[1:3]
@@ -804,8 +803,7 @@ def exec_waypoint_nav_demo(args):
         bp = behavioural_planner.BehaviouralPlanner(BP_LOOKAHEAD_BASE,
                                                     LEAD_VEHICLE_LOOKAHEAD,
                                                     nearest_tl,
-                                                    tl_dict,
-                                                    pd_dict)
+                                                    tl_dict)
 
         #############################################
         # Scenario Execution Loop
@@ -825,7 +823,7 @@ def exec_waypoint_nav_demo(args):
         prev_collision_pedestrians = 0
         prev_collision_other       = 0
 
-        
+        prev_time = time.time()
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -864,37 +862,43 @@ def exec_waypoint_nav_demo(args):
                                                  prev_collision_vehicles,
                                                  prev_collision_pedestrians,
                                                  prev_collision_other)
+
+            if collided_flag:
+                print("----------------------------------")
+                print("COLLISION DETECTED")
+                print("----------------------------------")
+                                                      
             collided_flag_history.append(collided_flag)
 
-
+            if frame % (LP_FREQUENCY_DIVISOR*2) == 0:
             # update traffic_lights status
-            pedestrians = []
-            for agent in measurement_data.non_player_agents:
-                if agent.HasField("traffic_light"):
-                    if agent.id in tl_dict:
-                        tl_dict[agent.id] = agent.traffic_light.state
-                if agent.HasField("pedestrian"):
-                    location = agent.pedestrian.transform.location
-                    dimensions = agent.pedestrian.bounding_box.extent
-                    orientation = agent.pedestrian.transform.rotation
-                    
-                    dist = np.subtract([current_x,current_y], [location.x,location.y])
-                    norm = np.linalg.norm(dist)
-                    # filter only pedestrian that are in a radiud of 30 metres
-                    if norm < 30:
-                        bb = obstacle_to_world(location, dimensions, orientation)
-                        #takes only verteces of pedestrians bb
-                        bb = bb[0:-1:2]
-                        pedestrians.append([bb,
-                                            [location.x,location.y],
-                                            orientation.yaw,
-                                            agent.pedestrian.forward_speed])
-            
-            pedestrians = np.array(pedestrians)
+                pedestrians = []
+                for agent in measurement_data.non_player_agents:
+                    if agent.HasField("traffic_light"):
+                        if agent.id in tl_dict:
+                            tl_dict[agent.id] = agent.traffic_light.state
+                    if agent.HasField("pedestrian"):
+                        location = agent.pedestrian.transform.location
+                        dimensions = agent.pedestrian.bounding_box.extent
+                        orientation = agent.pedestrian.transform.rotation
+                        
+                        dist = np.subtract([current_x,current_y], [location.x,location.y])
+                        norm = np.linalg.norm(dist)
+                        # filter only pedestrian that are in a radiud of 30 metres
+                        if norm < 30:
+                            bb = obstacle_to_world(location, dimensions, orientation)
+                            #takes only verteces of pedestrians bb
+                            bb = bb[0:-1:2]
+                            pedestrians.append([bb,
+                                                [location.x,location.y],
+                                                orientation.yaw*math.pi/180,
+                                                agent.pedestrian.forward_speed])
+                
+                pedestrians = np.array(pedestrians,dtype=object)
 
-            # set current info about traffic light (status) and pedestrian 
-            bp.set_tl_dict(tl_dict)
-            bp.set_pedestrians(pedestrians)
+                # set current info about traffic light (status) and pedestrian 
+                bp.set_tl_dict(tl_dict)
+                bp.set_pedestrians(pedestrians)
 
             camera_data = sensor_data.get('CameraRGB', None)
             if camera_data is not None:
@@ -1090,6 +1094,11 @@ def exec_waypoint_nav_demo(args):
             dist_to_last_waypoint = np.linalg.norm(np.array([
                 waypoints[-1][0] - current_x,
                 waypoints[-1][1] - current_y]))
+            
+            last_time = time.time()
+
+            print("[MAIN 1094] ELAPSED TIME:", last_time-prev_time)
+            prev_time = last_time
             if  dist_to_last_waypoint < DIST_THRESHOLD_TO_LAST_WAYPOINT:
                 reached_the_end = True
             if reached_the_end:
