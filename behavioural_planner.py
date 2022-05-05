@@ -99,6 +99,7 @@ class BehaviouralPlanner:
         # Make sure that get_closest_index() and get_goal_index() functions are
         # complete, and examine the check_for_stop_signs() function to
         # understand it.
+        closest_index = None
         print("\n[BP.TRANSITION_STATE] CURRENT STATE -> " ,STATES[self._state])
         if self._state == FOLLOW_LANE:
             # First, find the closest index to the ego vehicle.
