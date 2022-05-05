@@ -137,8 +137,9 @@ class BehaviouralPlanner:
 
             self._goal_index = goal_index
             self._goal_state = wp
+            
 
-        
+            
             
 
         # In this state, check if we have reached a complete stop. Use the
@@ -184,6 +185,8 @@ class BehaviouralPlanner:
            
         else:
             raise ValueError('Invalid state value.')
+        
+        print("[BP.transistion_state] closest_wp_index - goal_wp_index ", closest_index,self._goal_index )
 
   
     def get_goal_index(self, waypoints, ego_state, closest_len, closest_index):

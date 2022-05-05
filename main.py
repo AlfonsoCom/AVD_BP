@@ -872,7 +872,6 @@ def exec_waypoint_nav_demo(args):
 
             if frame % (LP_FREQUENCY_DIVISOR*2) == 0:
             # update traffic_lights status
-<<<<<<< HEAD
                 pedestrians = []
                 for agent in measurement_data.non_player_agents:
                     if agent.HasField("traffic_light"):
@@ -896,31 +895,6 @@ def exec_waypoint_nav_demo(args):
                                                 agent.pedestrian.forward_speed])
                 
                 pedestrians = np.array(pedestrians,dtype=object)
-=======
-            pedestrians = []
-            for agent in measurement_data.non_player_agents:
-                if agent.HasField("traffic_light"):
-                    if agent.id in tl_dict:
-                        tl_dict[agent.id] = agent.traffic_light.state
-                if agent.HasField("pedestrian"):
-                    location = agent.pedestrian.transform.location
-                    dimensions = agent.pedestrian.bounding_box.extent
-                    orientation = agent.pedestrian.transform.rotation
-                    
-                    dist = np.subtract([current_x,current_y], [location.x,location.y])
-                    norm = np.linalg.norm(dist)
-                    # filter only pedestrian that are in a radius of 30 metres
-                    if norm < 30:
-                        bb = obstacle_to_world(location, dimensions, orientation)
-                        #takes only verteces of pedestrians bb
-                        bb = bb[0:-1:2]
-                        pedestrians.append([bb,
-                                            [location.x,location.y],
-                                            orientation.yaw,
-                                            agent.pedestrian.forward_speed])
-            
-            pedestrians = np.array(pedestrians)
->>>>>>> d856264f1adba50caf460121d319236e18896a25
 
                 # set current info about traffic light (status) and pedestrian 
                 bp.set_tl_dict(tl_dict)
