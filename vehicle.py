@@ -24,3 +24,6 @@ class Vehicle():
 
     def get_speed(self):
         return self._speed
+
+    def __str__(self):
+        return f"Vehicle(id={self._id}, x={round(self._position.x,2)}, y={round(self._position.y,2)})"
