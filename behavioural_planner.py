@@ -123,7 +123,6 @@ class BehaviouralPlanner:
             print("[BP.transition_state] lead_vehicle -> ", lead_vehicle)
             
             if lead_vehicle:
-                print('\a')
                 lead_vehicle_speed = lead_vehicle.get_speed()
                 wp = [ waypoints[goal_index][0], waypoints[goal_index][1],lead_vehicle_speed]
                 print("[BP.transition_state] lead_vehicle_speed -> ", lead_vehicle_speed)
@@ -719,18 +718,7 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.
     
     return vehicles[nearest_car_index] if nearest_car_index is not None else None
             
-
-
-    
-
-
-     
-        
-    
-    
-    
-
-
-
-
-
+def compute_separation_distance(ego_speed):
+    kmh_speed = ego_speed * 3.6
+    separation_distance = math.pow((kmh_speed/10),2)
+    return separation_distance
