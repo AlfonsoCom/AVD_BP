@@ -124,8 +124,10 @@ class BehaviouralPlanner:
             
             if lead_vehicle:
                 lead_vehicle_speed = lead_vehicle.get_speed()
+                if lead_vehicle_speed < 0:
+                    lead_vehicle_speed = 0
                 wp = [ waypoints[goal_index][0], waypoints[goal_index][1],lead_vehicle_speed]
-                print("[BP.transition_state] lead_vehicle_speed -> ", lead_vehicle_speed)
+                print("[BP.transition_state] lead_vehicle_speed -> ", round(lead_vehicle_speed,2))
 
             if collisioned:
                 if closed_loop_speed > STOP_THRESHOLD:
