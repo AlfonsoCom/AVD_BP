@@ -718,8 +718,8 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.
 
     min_distance = math.inf
     nearest_car_index = None
-    for i,vehicle in vehicles:
-        dist = np.subtract(vehicle.get_location(),ego_pos)
+    for i,vehicle in enumerate(vehicles):
+        dist = np.subtract(vehicle.get_position(),ego_pos)
         norm = np.linalg.norm(dist)
         if norm < min_distance:
             min_distance = norm

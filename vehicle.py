@@ -13,13 +13,14 @@ class Vehicle():
         return self._id
 
     def get_position(self):
-        return self._position
+        pos = self._position
+        return [pos.x, pos.y]
 
     def get_bounding_box(self):
         return self._bb
     
     def get_orientation(self):
-        return self._orientation
+        return self._orientation.yaw
 
     def get_speed(self):
         return self._speed

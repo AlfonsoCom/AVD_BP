@@ -46,10 +46,10 @@ LOCAL_PORT = 2000
 ###############################################################################
 PLAYER_START_INDEX = 89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 10000     # total number of pedestrians to spawn
+NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
 NUM_VEHICLES           = 10000    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
+SEED_VEHICLES          = 67      # seed for vehicle spawn randomizer
 ###############################################################################àà
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -547,7 +547,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 5.0
+        desired_speed = 18.0 #PRIMA ERA 5.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
