@@ -120,9 +120,13 @@ class BehaviouralPlanner:
             wp = [ waypoints[goal_index][0], waypoints[goal_index][1],waypoints[goal_index][2]]
 
             lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],self._vehicles,self._lookahead)
-
             print("[BP.transition_state] lead_vehicle -> ", lead_vehicle)
-
+            
+            if lead_vehicle:
+                print('\a')
+                lead_vehicle_speed = lead_vehicle.get_speed()
+                wp = [ waypoints[goal_index][0], waypoints[goal_index][1],lead_vehicle_speed]
+                print("[BP.transition_state] lead_vehicle_speed -> ", lead_vehicle_speed)
 
             if collisioned:
                 if closed_loop_speed > STOP_THRESHOLD:
@@ -140,15 +144,8 @@ class BehaviouralPlanner:
                         wp = [ waypoints[goal_index][0],waypoints[goal_index][1],0]
                         self._state = DECELERATE_TO_STOP
 
-
-
-
             self._goal_index = goal_index
-            self._goal_state = wp
-            
-
-            
-            
+            self._goal_state = wp                  
 
         # In this state, check if we have reached a complete stop. Use the
         # closed loop speed to do so, to ensure we are actually at a complete
@@ -666,7 +663,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
 
 def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.5,looksideways_left=1.5):
     if len(vehicles)==0:
-        return False,[]
+        return None
 
     # Step 1 filter vehicles in bb
     A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
@@ -675,12 +672,9 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.
     vehicles_boolean = vehicles == None
     flag = False
     for i,vehicle in enumerate(vehicles):
-        # get pedestrian bb
         vehicle_bb_verteces = vehicle.get_bounding_box()
-        
 
         for bb_vertex in vehicle_bb_verteces:
-            
             vertex = Point(bb_vertex)
             if bb.contains(vertex):
                 flag = True
@@ -692,10 +686,8 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.
     if len(vehicles) == 0:
         return None
 
-
     # STEP 2 check if car orientation is equal to the orientation of filtered cars
     # because a lead vehicle moves itself in the same  direction of the ego car 
-  
 
     THRESHOLD_DEGREE = 3.5
     
