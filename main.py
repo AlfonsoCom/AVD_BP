@@ -20,6 +20,7 @@ import behavioural_planner
 import cv2
 import json 
 from math import sin, cos, pi, tan, sqrt
+from vehicle import Vehicle
 
 # Script level imports
 sys.path.append(os.path.abspath(sys.path[0] + '/..'))
@@ -46,7 +47,7 @@ LOCAL_PORT = 2000
 PLAYER_START_INDEX = 89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 10000     # total number of pedestrians to spawn
-NUM_VEHICLES           = 1    # total number of vehicles to spawn
+NUM_VEHICLES           = 10000    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -116,6 +117,8 @@ INTERP_DISTANCE_RES       = 0.01 # distance between interpolated points
 # controller output directory
 CONTROLLER_OUTPUT_FOLDER = os.path.dirname(os.path.realpath(__file__)) +\
                            '/controller_output/'
+
+AGENTS_CHECK_RADIUS = 30
 
 # Camera parameters
 camera_parameters = {}
@@ -702,6 +705,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         nearest_tl = []
         tl_dict = {}
+        # we compute here traffic lights filter because they are stationary objects.
         for i,tl in enumerate(traffic_lights):
             # compute distances vector between waypoints and current traffic light
             temp = waypoints[:,:2] - tl[1:3]
@@ -879,6 +883,7 @@ def exec_waypoint_nav_demo(args, host, port):
             if frame % (LP_FREQUENCY_DIVISOR*2) == 0:
             # update traffic_lights status
                 pedestrians = []
+                vehicles = []
                 for agent in measurement_data.non_player_agents:
                     if agent.HasField("traffic_light"):
                         if agent.id in tl_dict:
@@ -891,8 +896,8 @@ def exec_waypoint_nav_demo(args, host, port):
                         dist = np.subtract([current_x,current_y], [location.x,location.y])
                         norm = np.linalg.norm(dist)
                         # filter only pedestrian that are in a radiud of 30 metres
-                        PEDESTRIAN_CHECK_RADIUS = 30
-                        if norm < PEDESTRIAN_CHECK_RADIUS:
+                        
+                        if norm < AGENTS_CHECK_RADIUS:
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
@@ -900,12 +905,31 @@ def exec_waypoint_nav_demo(args, host, port):
                                                 [location.x,location.y],
                                                 orientation.yaw*math.pi/180,
                                                 agent.pedestrian.forward_speed])
+                    if agent.HasField("vehicle"):
+                        location = agent.vehicle.transform.location
+                        dimensions = agent.vehicle.bounding_box.extent
+                        orientation = agent.vehicle.transform.rotation
+
+                        dist = np.subtract([current_x,current_y], [location.x,location.y])
+                        norm = np.linalg.norm(dist)
+                        # filter only vehicle that are in a radiud of 30 metres
+                        
+                        if norm < AGENTS_CHECK_RADIUS:
+                            id = agent.id
+                            speed = agent.vehicle.forward_speed
+                            bb = obstacle_to_world(location, dimensions, orientation)
+                            #takes only verteces of pedestrians bb
+                            bb = bb[0:-1:2]
+                            vehicles.append(Vehicle(id,location,bb,orientation,speed))
+
                 
                 pedestrians = np.array(pedestrians,dtype=object)
+                vehicles = np.array(vehicles)
 
-                # set current info about traffic light (status) and pedestrian 
+                # set current info about traffic light (status), pedestrian and vehicle 
                 bp.set_tl_dict(tl_dict)
                 bp.set_pedestrians(pedestrians)
+                bp.set_vehicles(vehicles)
 
             camera_data = sensor_data.get('CameraRGB', None)
             if camera_data is not None:
