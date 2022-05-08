@@ -46,8 +46,8 @@ LOCAL_PORT = 2000
 ###############################################################################
 PLAYER_START_INDEX = 20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 200     # total number of pedestrians to spawn
-NUM_VEHICLES           = 100    # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
+NUM_VEHICLES           = 1000    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 5      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -547,7 +547,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 5.0
+        desired_speed = 15.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -834,6 +834,8 @@ def exec_waypoint_nav_demo(args, host, port):
         prev_collision_other       = 0
 
         prev_time = time.time()
+
+        vehicles_dict = {}
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -880,8 +882,9 @@ def exec_waypoint_nav_demo(args, host, port):
                                                       
             collided_flag_history.append(collided_flag)
 
-            if frame % (LP_FREQUENCY_DIVISOR*2) == 0:
+            if frame % (LP_FREQUENCY_DIVISOR) == 0:
             # update traffic_lights status
+                
                 pedestrians = []
                 vehicles = []
                 for agent in measurement_data.non_player_agents:
@@ -920,7 +923,9 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            vehicles.append(Vehicle(id,location,bb,orientation,speed))
+                            vehicle = Vehicle(id,location,bb,orientation,speed)
+                            vehicles.append(vehicle)
+                            vehicles_dict[id] = vehicle 
 
                 
                 pedestrians = np.array(pedestrians,dtype=object)
@@ -930,6 +935,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 bp.set_tl_dict(tl_dict)
                 bp.set_pedestrians(pedestrians)
                 bp.set_vehicles(vehicles)
+                bp.set_vehicles_dict(vehicles_dict)
 
             camera_data = sensor_data.get('CameraRGB', None)
             if camera_data is not None:
@@ -984,7 +990,13 @@ def exec_waypoint_nav_demo(args, host, port):
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
-                    local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
+                    
+                    lead_car_state = None
+                    if bp._lead_vehicle is not None:
+                        lead_car_pos = bp._lead_vehicle.get_position()
+                        lead_car_speed = bp._lead_vehicle.get_speed()
+                        lead_car_state = [lead_car_pos[0],lead_car_pos[1],lead_car_speed] 
+                    local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, lead_car_state, bp._follow_lead_vehicle)
 
                     if local_waypoints != None:
                         # Update the controller waypoint path with the best local path.
@@ -1049,6 +1061,17 @@ def exec_waypoint_nav_demo(args, host, port):
                 # Update live plotter with new feedback
                 trajectory_fig.roll("trajectory", current_x, current_y)
                 trajectory_fig.roll("car", current_x, current_y)
+
+                if lead_car_state is not None:
+                    current_lead_car_x = lead_car_state[0]
+                    current_lead_car_y = lead_car_state[1]
+                else:
+                    current_lead_car_x = 0
+                    current_lead_car_y = 0
+
+                trajectory_fig.roll("leadcar", current_lead_car_x, current_lead_car_y)
+
+
                 
                 # Load parked car points
                 obstacles = np.array(obstacles)
