@@ -27,7 +27,7 @@ BASE_LOOKSIDEWAYS_RIGHT = 1.5
 BASE_LOOKSIDEWAYS_LEFT = 1.5
 
 MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT = 4
-MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT = 2.5
+MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT = 3.15
 
 
 class BehaviouralPlanner:
@@ -164,7 +164,7 @@ class BehaviouralPlanner:
                 if not self._follow_lead_vehicle :
                     self._lead_vehicle = None
 
-            print("[BP.transition_state] lead_vehicle -> ", self._lead_vehicle)
+            print("[BP.transition_state] lead_vehicle -> ", self._follow_lead_vehicle,self._lead_vehicle)
             if self._lead_vehicle:
                 print("[BP.transition_state] lead_vehicle speed -> ", self._lead_vehicle.get_speed())
                 print("[BP.transition_state] ego speed -> ", closed_loop_speed)
@@ -440,15 +440,24 @@ class BehaviouralPlanner:
                                      lead_car_position[1] - ego_state[1]]
             lead_car_distance = np.linalg.norm(lead_car_delta_vector)
 
-            # Add a 15m buffer to prevent oscillations for the distance check.
-            if lead_car_distance < self._follow_lead_vehicle_lookahead + 15:
-                return
             # Check to see if the lead vehicle is still within the ego vehicle's
             # frame of view.
             lead_car_delta_vector = np.divide(lead_car_delta_vector, lead_car_distance)
             ego_heading_vector = [math.cos(ego_state[2]), math.sin(ego_state[2])]
-            if np.dot(lead_car_delta_vector, ego_heading_vector) > (1 / math.sqrt(2)):
-                return
+
+            is_in_car_view = np.dot(lead_car_delta_vector, ego_heading_vector) > (1 / math.sqrt(2))
+
+            if is_in_car_view:
+                if lead_car_distance < self._follow_lead_vehicle_lookahead + 15:
+                    return
+                
+            # if np.dot(lead_car_delta_vector, ego_heading_vector) > (1 / math.sqrt(2)):
+            #     return
+
+            # # Add a 15m buffer to prevent oscillations for the distance check.
+            # if lead_car_distance < self._follow_lead_vehicle_lookahead + 15:
+            #     return
+            
 
             self._follow_lead_vehicle = False
 
