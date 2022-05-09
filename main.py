@@ -48,8 +48,8 @@ VIEWING_CAMERA = True
 ###############################################################################
 PLAYER_START_INDEX = 89 #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 133 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
-NUM_VEHICLES           = 1        # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 250     # total number of pedestrians to spawn
+NUM_VEHICLES           = 250        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -731,11 +731,12 @@ def exec_waypoint_nav_demo(args, host, port):
                 nearest_tl.append(tl[:-1]) # not interested to store status information  here
                 #get id and status
                 tl_dict[tl[0]]=tl[-1]
-                trajectory_fig.add_graph(f"{tl[0]}",
-                                    window_size=1, 
-                                    x0=[tl[1]], y0=[tl[2]],
-                                    marker=11, color=[1, 0.5, 0], 
-                                    markertext=f"{i}", marker_text_offset=1)
+                if enable_live_plot:
+                    trajectory_fig.add_graph(f"{tl[0]}",
+                                        window_size=1, 
+                                        x0=[tl[1]], y0=[tl[2]],
+                                        marker=11, color=[1, 0.5, 0], 
+                                        markertext=f"{i}", marker_text_offset=1)
             
         nearest_tl = np.array(nearest_tl)
         print("SHAPE:")
@@ -801,7 +802,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         # live plotter is disabled, hide windows
         if not enable_live_plot:
-            lp_traj._root.withdraw()
+            #lp_traj._root.withdraw()
             lp_1d._root.withdraw()        
 
 
@@ -1138,7 +1139,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 # set by the options
                 if enable_live_plot and \
                    live_plot_timer.has_exceeded_lap_period():
-                    lp_traj.refresh()
+                    #lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
             
