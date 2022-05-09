@@ -27,7 +27,7 @@ BASE_LOOKSIDEWAYS_RIGHT = 1.5
 BASE_LOOKSIDEWAYS_LEFT = 1.5
 
 MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT = 4
-MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT = 2
+MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT = 2.5
 
 
 class BehaviouralPlanner:
@@ -119,9 +119,9 @@ class BehaviouralPlanner:
         # understand it.
         closest_index = None
         pedestrian_looksideways_left = min(BASE_LOOKSIDEWAYS_LEFT+closed_loop_speed/1.8,MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT)
-        pedestrian_looksideways_right = min(BASE_LOOKSIDEWAYS_RIGHT+closed_loop_speed/3.6,MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT)
+        pedestrian_looksideways_right = min(BASE_LOOKSIDEWAYS_RIGHT+closed_loop_speed/1.8,MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT)
         
-        separation_distance = compute_separation_distance(closed_loop_speed)+5*closed_loop_speed/5 # add 5 meters (defines it better) due to the fact that we cannot break
+        separation_distance = compute_separation_distance(closed_loop_speed)+max(closed_loop_speed,10) # add 5 meters (defines it better) due to the fact that we cannot break
         
         
         print("\n[BP.TRANSITION_STATE] CURRENT STATE -> " ,STATES[self._state])
@@ -131,6 +131,8 @@ class BehaviouralPlanner:
         print("[BP.transition_state] look a head ->",self._lookahead)
         print("[BP.transition_state] separation distance ->",separation_distance)
 
+
+        separation_distance = self._lookahead
         if self._state == FOLLOW_LANE:
             # First, find the closest index to the ego vehicle.
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
@@ -166,23 +168,6 @@ class BehaviouralPlanner:
             if self._lead_vehicle:
                 print("[BP.transition_state] lead_vehicle speed -> ", self._lead_vehicle.get_speed())
                 print("[BP.transition_state] ego speed -> ", closed_loop_speed)
-
-
-
-
-
-            # if the car follows a vehicle update ego speed according to lead vehicle speed
-            if self._follow_lead_vehicle == True:
-                lead_vehicle_speed = self._lead_vehicle.get_speed()
-
-                # change car speed if it is more faster than lead vehicle
-                # wp_speed = closed_loop_speed if closed_loop_speed < lead_vehicle_speed else lead_vehicle_speed
-                
-                # if wp_speed < 0:
-                #     wp_speed = 0
-                #wp = [ waypoints[goal_index][0], waypoints[goal_index][1],wp_speed]
-                # print("[BP.transition_state] lead_vehicle_speed -> ", round(lead_vehicle_speed,2))
-            
 
             goal_index_pd = goal_index
             goal_index_tl = goal_index
@@ -249,10 +234,11 @@ class BehaviouralPlanner:
             # the new stop goal index will be the closest_index.    
             if goal_index>self._goal_index:
                 #if goal_index<closest_index:
-                if self._goal_index<closest_index:
-                    goal_index = closest_index
-                else:
-                    goal_index = self._goal_index
+                goal_index = self._goal_index
+                # if self._goal_index<closest_index:
+                #     goal_index = closest_index
+                # else:
+                #     goal_index = self._goal_index
 
             # we chose the goal index to stop according the fact that         
             goal_index_pd = goal_index

@@ -44,11 +44,11 @@ LOCAL_PORT = 2000
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
-NUM_VEHICLES           = 1000    # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 5      # seed for pedestrian spawn randomizer
+PLAYER_START_INDEX = 89 #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 133 #40# 133 #61   #142      # Setting a Destination HERE
+NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
+NUM_VEHICLES           = 500    # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
 
