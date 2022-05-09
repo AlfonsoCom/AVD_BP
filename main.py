@@ -41,6 +41,8 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
+VIEWING_CAMERA = True
+
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
@@ -218,7 +220,11 @@ def make_carla_settings(args):
     camera0 = Camera("CameraRGB")
     camera0.set_image_size(camera_width, camera_height)
     camera0.set(FOV=camera_fov)
-    camera0.set_position(cam_x_pos, cam_y_pos, cam_height)
+    if VIEWING_CAMERA:
+        camera0.set_position(-5.0, 0.0, 2.5)
+        camera0.set_rotation(-15.0, 0.0, 0.0)
+    else:
+        camera0.set_position(cam_x_pos, cam_y_pos, cam_height)
 
     settings.add_sensor(camera0)
 
