@@ -49,7 +49,7 @@ VIEWING_CAMERA = True
 PLAYER_START_INDEX = 89 #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 133 #40# 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
-NUM_VEHICLES           = 1    # total number of vehicles to spawn
+NUM_VEHICLES           = 1        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -222,12 +222,13 @@ def make_carla_settings(args):
     camera_height = camera_parameters['height']
     camera_fov = camera_parameters['fov']
 
+
     # Declare here your sensors
     camera0 = Camera("CameraRGB")
     camera0.set_image_size(camera_width, camera_height)
     camera0.set(FOV=camera_fov)
     camera0.set_position(cam_x_pos, cam_y_pos, cam_height)
-    camera0.set_position(camera_pitch, camera_roll, camera_yaw)
+    camera0.set_rotation(camera_pitch, camera_roll, camera_yaw)
 
     settings.add_sensor(camera0)
 

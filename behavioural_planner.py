@@ -164,10 +164,10 @@ class BehaviouralPlanner:
                 if not self._follow_lead_vehicle :
                     self._lead_vehicle = None
 
-            print("[BP.transition_state] lead_vehicle -> ", self._lead_vehicle)
-            if self._lead_vehicle:
-                print("[BP.transition_state] lead_vehicle speed -> ", self._lead_vehicle.get_speed())
-                print("[BP.transition_state] ego speed -> ", closed_loop_speed)
+            # print("[BP.transition_state] lead_vehicle -> ", self._lead_vehicle)
+            # if self._lead_vehicle:
+            #     print("[BP.transition_state] lead_vehicle speed -> ", self._lead_vehicle.get_speed())
+            #     print("[BP.transition_state] ego speed -> ", closed_loop_speed)
 
             goal_index_pd = goal_index
             goal_index_tl = goal_index
@@ -625,6 +625,8 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
 
     tl = traffic_lights[index_tl_in_bb]
    
+    print("[BP.check_traffic_light] THERE ARE SOME TL DETECTED ->",len(tl)!=0)
+
     if len(tl)==0:
         return []
     # STEP 2 check if car orientation is opposite to traffic lights orientation
@@ -635,12 +637,18 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     THRESHOLD_DEGREE = 2.5
     
     ego_yaw = ego_yaw*180/math.pi
+    print("[BP.check_traffic_light] TL YAW ->", tl[:,3])
+    print("[BP.check_traffic_light] TL YAW ->", ego_yaw)
     # 180 - ( traffic_lights_yaw + car_yaw)
     #index_tl_opposite = np.where( np.abs(REFERENCE_ANGLE-(np.abs(tl[:,3])+abs(ego_yaw))) <= THRESHOLD_DEGREE)[0]
     check_sum_90 = np.abs(90-(tl[:,3]+abs(ego_yaw)))<=THRESHOLD_DEGREE
     check_sum_270 = np.abs(270-(tl[:,3]+abs(ego_yaw)))<=THRESHOLD_DEGREE
     check = np.logical_or(check_sum_90,check_sum_270)
     tl = tl[check] # This line allows to filter elements that satisfy "check" condition (that's a boolean array)
+    
+
+    print("[BP.check_traffic_light] THERE ARE SOME TL WITH OPPOSITE ORIENTATION ->",len(tl)!=0)
+    
     if len(tl) == 0:
         return [] 
 
@@ -650,6 +658,9 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     dist = np.subtract(tl[:,1:3],ego_pos)
     norm = np.linalg.norm(dist,axis = 1)
     index_tl = np.argmin(norm)
+
+    print("[BP.check_traffic_light] INFO NEAREST TL ->",tl[index_tl])
+
     return tl[index_tl] # return the nearest traffic light
 
 
@@ -727,11 +738,11 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     if len(pds)!=0:
         pds = pds.reshape((-1,4))
 
-    if flag:
-        print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_position ->",pd_position)
-        print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_speed ->",pd_speed)
-        print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_orientation ->",pd_orientation)
-        print("[BP.CHECK_PEDESTRIAN] pds.shape ->",pds.shape)
+    # if flag:
+    #     print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_position ->",pd_position)
+    #     print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_speed ->",pd_speed)
+    #     print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_orientation ->",pd_orientation)
+    #     print("[BP.CHECK_PEDESTRIAN] pds.shape ->",pds.shape)
 
     pedestrian_collided = False 
 
