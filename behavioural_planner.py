@@ -309,6 +309,8 @@ class BehaviouralPlanner:
             if traffic_light_on_path:
                 id = self._current_traffic_light[0]
                 traffic_light_stop = self._tl_dict[id] != GREEN
+                print("[BP.TRANSITION_STATE.STAY_STOPPED] traffic_light GREEN->", not traffic_light_on_path )
+
 
             #traffic_light_condition = True if self._tl_id is None else self._tl_dict[self._tl_id] == GREEN
 
@@ -609,10 +611,10 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     """
 
     #STEP 1 check traffic_light is in bounding box
-    
-    # center_point = Point(ego_pos)
+    # compute bounding box starting from car bonnet
+    center_point = compute_point_along_direction(ego_pos,ego_yaw,distance=2)
         
-    A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
+    A,B,C,D = compute_bb_verteces(center_point,lookahead,ego_yaw,looksideways_right,looksideways_left)
     bb = Polygon([A,B,C,D,A])
     n_tl = len(traffic_lights)
     index_tl_in_bb = np.array(np.zeros((n_tl,)),dtype=bool)
@@ -634,15 +636,15 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     # Such that car and traffic lights had must be opposite so the sum
     # of their absolute yaw angles must be about 270° or 90°
 
-    THRESHOLD_DEGREE = 2.5
+    THRESHOLD_DEGREE = 3
     
     ego_yaw = ego_yaw*180/math.pi
     print("[BP.check_traffic_light] TL YAW ->", tl[:,3])
-    print("[BP.check_traffic_light] TL YAW ->", ego_yaw)
+    print("[BP.check_traffic_light] EGO YAW ->", ego_yaw)
     # 180 - ( traffic_lights_yaw + car_yaw)
     #index_tl_opposite = np.where( np.abs(REFERENCE_ANGLE-(np.abs(tl[:,3])+abs(ego_yaw))) <= THRESHOLD_DEGREE)[0]
-    check_sum_90 = np.abs(90-(tl[:,3]+abs(ego_yaw)))<=THRESHOLD_DEGREE
-    check_sum_270 = np.abs(270-(tl[:,3]+abs(ego_yaw)))<=THRESHOLD_DEGREE
+    check_sum_90 = np.abs(90-np.abs(tl[:,3]+ego_yaw))<=THRESHOLD_DEGREE
+    check_sum_270 = np.abs(270-np.abs(tl[:,3]+ego_yaw))<=THRESHOLD_DEGREE
     check = np.logical_or(check_sum_90,check_sum_270)
     tl = tl[check] # This line allows to filter elements that satisfy "check" condition (that's a boolean array)
     
