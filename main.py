@@ -49,7 +49,7 @@ VIEWING_CAMERA = True
 PLAYER_START_INDEX = 89 #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 133 #40# 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
-NUM_VEHICLES           = 500    # total number of vehicles to spawn
+NUM_VEHICLES           = 1    # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -127,8 +127,8 @@ camera_parameters = {}
 camera_parameters['x'] = 1.8
 camera_parameters['y'] = 0
 camera_parameters['z'] = 1.3
-camera_parameters['width'] = 200
-camera_parameters['height'] = 200
+camera_parameters['width'] = 200 if not VIEWING_CAMERA else 500 
+camera_parameters['height'] = 200 if not VIEWING_CAMERA else 500
 camera_parameters['fov'] = 90
 
 def rotate_x(angle):
