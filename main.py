@@ -124,9 +124,12 @@ AGENTS_CHECK_RADIUS = 30
 
 # Camera parameters
 camera_parameters = {}
-camera_parameters['x'] = 1.8
-camera_parameters['y'] = 0
-camera_parameters['z'] = 1.3
+camera_parameters['x'] = 1.8 if not VIEWING_CAMERA else -5.0
+camera_parameters['y'] = 0.0
+camera_parameters['z'] = 1.3 if not VIEWING_CAMERA else 2.5
+camera_parameters['pitch'] = 0.0 if not VIEWING_CAMERA else -15.0
+camera_parameters['roll'] = 0.0
+camera_parameters['yaw'] = 0.0
 camera_parameters['width'] = 200 if not VIEWING_CAMERA else 500 
 camera_parameters['height'] = 200 if not VIEWING_CAMERA else 500
 camera_parameters['fov'] = 90
@@ -212,6 +215,9 @@ def make_carla_settings(args):
     cam_height = camera_parameters['z'] 
     cam_x_pos = camera_parameters['x']
     cam_y_pos = camera_parameters['y']
+    camera_pitch = camera_parameters['pitch']
+    camera_roll = camera_parameters['roll']
+    camera_yaw = camera_parameters['yaw']
     camera_width = camera_parameters['width']
     camera_height = camera_parameters['height']
     camera_fov = camera_parameters['fov']
@@ -220,11 +226,8 @@ def make_carla_settings(args):
     camera0 = Camera("CameraRGB")
     camera0.set_image_size(camera_width, camera_height)
     camera0.set(FOV=camera_fov)
-    if VIEWING_CAMERA:
-        camera0.set_position(-5.0, 0.0, 2.5)
-        camera0.set_rotation(-15.0, 0.0, 0.0)
-    else:
-        camera0.set_position(cam_x_pos, cam_y_pos, cam_height)
+    camera0.set_position(cam_x_pos, cam_y_pos, cam_height)
+    camera0.set_position(camera_pitch, camera_roll, camera_yaw)
 
     settings.add_sensor(camera0)
 
