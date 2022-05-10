@@ -29,6 +29,7 @@ BASE_LOOKSIDEWAYS_LEFT = 1.5
 MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT = 4
 MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT = 3.15
 
+N_FRAMES = 15
 
 class BehaviouralPlanner:
     def __init__(self, lookahead, lead_vehicle_lookahead,traffic_lights,tl_dict,pedestrians=[], vehicles = []):
@@ -49,6 +50,9 @@ class BehaviouralPlanner:
         self._vehicles                      = vehicles
         self._lead_vehicle                  = None
         self._vehicles_dict                 = None
+        self._count                         = 0 # this variable is used to count the number of bp executions
+        self._last_car_angle                = 0
+
 
     def set_lookahead(self, lookahead):
         self._lookahead = lookahead
@@ -64,6 +68,9 @@ class BehaviouralPlanner:
 
     def set_vehicles_dict(self,vehicles_dict):
         self._vehicles_dict = vehicles_dict
+
+    
+    
 
     #Handles state transitions and computes the goal state.
     def transition_state(self, waypoints, ego_state, closed_loop_speed):
@@ -132,7 +139,15 @@ class BehaviouralPlanner:
         print("[BP.transition_state] separation distance ->",separation_distance)
 
 
-        separation_distance = self._lookahead
+        
+
+        if self._count % N_FRAMES == 0:
+            self._last_car_angle = ego_state[2]
+
+        angle_difference = self._last_car_angle - ego_state[2]
+        pedestrian_lookahaed = 5 if angle_difference > 15 and angle_difference < 345 else self._lookahead
+        separation_distance = self._lookahead 
+
         if self._state == FOLLOW_LANE:
             # First, find the closest index to the ego vehicle.
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
@@ -174,7 +189,7 @@ class BehaviouralPlanner:
 
             ### check pedestrian intersection
             pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
-                self._pedestrians,lookahead= separation_distance,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
+                self._pedestrians,lookahead= pedestrian_lookahaed,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
             # pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
             #     self._pedestrians,self._lookahead,looksideways_right=2.5,looksideways_left=4)
                 
@@ -251,7 +266,7 @@ class BehaviouralPlanner:
             goal_index_pd = goal_index
             goal_index_tl = goal_index
             
-            pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
+            pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=pedestrian_lookahaed,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
 
             # pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=2.5,looksideways_left=4)
             

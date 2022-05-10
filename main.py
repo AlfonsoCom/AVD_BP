@@ -804,7 +804,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         # live plotter is disabled, hide windows
         if not enable_live_plot:
-            lp_traj._root.withdraw()
+           # lp_traj._root.withdraw()
             lp_1d._root.withdraw()        
 
 
@@ -1141,7 +1141,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 # set by the options
                 if enable_live_plot and \
                    live_plot_timer.has_exceeded_lap_period():
-                    lp_traj.refresh()
+                    #lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
             
