@@ -24,8 +24,6 @@ from vehicle import Vehicle
 
 import os
 
-
-
 # Script level imports
 sys.path.append(os.path.abspath(sys.path[0] + '/..'))
 import live_plotter as lv   # Custom live plotting library
@@ -45,14 +43,14 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
-VIEWING_CAMERA = False
-USE_CAMERA = False
+VIEWING_CAMERA = True
+USE_CAMERA = True
 
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 54 #20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 17 #40# 133 #61   #142      # Setting a Destination HERE
+PLAYER_START_INDEX = 137 #54 #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 139 #17 #40# 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 100     # total number of pedestrians to spawn
 NUM_VEHICLES           = 151        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
@@ -893,11 +891,6 @@ def exec_waypoint_nav_demo(args, host, port):
                                                  prev_collision_vehicles,
                                                  prev_collision_pedestrians,
                                                  prev_collision_other)
-
-            if collided_flag:
-                print("----------------------------------")
-                print("COLLISION DETECTED")
-                print("----------------------------------")
                                                       
             collided_flag_history.append(collided_flag)
 
@@ -991,7 +984,8 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 print("LOGINFO\n")
 
-                print(f"[CURRENT_STATE]: {bp._state}", end="\t")
+                states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
+                print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
                 if collided_flag:
                     print("[COLLISION]: Yes")
                 else:
@@ -1013,21 +1007,15 @@ def exec_waypoint_nav_demo(args, host, port):
                 else:
                     leader_pos = leader.get_position()
                     print(f"[LEADER_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
-                    print(f"[LEADER_YAW]: {round(leader.get_orientation()*180/math.pi, 2)}", end='\t')
+                    print(f"[LEADER_YAW]: {round(leader.get_orientation(), 2)}", end='\t')
                     print(f"[LEADER_SPEED]: {round(leader.get_speed(), 2)}")
 
                 tl = bp._current_traffic_light
                 if len(tl) != 0:
                     print(f"[T_LIGHT_POS]: ({round(tl[1],2)}, {round(tl[2],2)})", end='\t')
                     print(f"[T_LIGHT_YAW]: {round(tl[3],2)} deg", end='\t')
-                    status = bp._tl_dict[tl[0]]
-                    if status == 0:
-                        status = "GREEN"
-                    elif status == 1:
-                        status = "YELLOW"
-                    else:
-                        status = "RED"
-                    print(f"[T_LIGHT_STATUS]: {status}")
+                    statuses = ["GREEN", "YELLOW", "RED"]
+                    print(f"[T_LIGHT_STATUS]: {statuses[bp._tl_dict[tl[0]]]}")
                 else:
                     print(f"[T_LIGHT_POS]: None", end='\t')
                     print(f"[T_LIGHT_YAW]: None", end='\t')
@@ -1218,8 +1206,8 @@ def exec_waypoint_nav_demo(args, host, port):
                 waypoints[-1][1] - current_y]))
             
             last_time = time.time()
-
-            print("[MAIN 1094] ELAPSED TIME:", last_time-prev_time)
+            if frame % LP_FREQUENCY_DIVISOR == 0:
+                print(f"[ELAPSED_TIME]: {round(last_time-prev_time,2)}")
             prev_time = last_time
             if  dist_to_last_waypoint < DIST_THRESHOLD_TO_LAST_WAYPOINT:
                 reached_the_end = True
