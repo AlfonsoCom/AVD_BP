@@ -49,8 +49,8 @@ USE_CAMERA = True
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 54 #20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 17 #40# 133 #61   #142      # Setting a Destination HERE
+PLAYER_START_INDEX = 136  #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 100     # total number of pedestrians to spawn
 NUM_VEHICLES           = 151        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
@@ -1001,9 +1001,9 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 leader = bp._lead_vehicle
                 if leader is None:
-                    print(f"[LEADER_POS]: None", end='\t')
-                    print(f"[LEADER_YAW]: None", end='\t')
-                    print(f"[LEADER_SPEED]: None")
+                    print(f"[LEADER_POS]: (XXX.XX, XXX.XX)", end='\t')
+                    print(f"[LEADER_YAW]: X.XX deg", end='\t')
+                    print(f"[LEADER_SPEED]: X.XX m/s")
                 else:
                     leader_pos = leader.get_position()
                     print(f"[LEADER_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
@@ -1012,14 +1012,14 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 tl = bp._current_traffic_light
                 if len(tl) != 0:
-                    print(f"[T_LIGHT_POS]: ({round(tl[1],2)}, {round(tl[2],2)})", end='\t')
-                    print(f"[T_LIGHT_YAW]: {round(tl[3],2)} deg", end='\t')
+                    print(f"[T_LIG_POS]: ({round(tl[1],2)}, {round(tl[2],2)})", end='\t')
+                    print(f"[T_LIG_YAW]: {round(tl[3],2)} deg", end='\t')
                     statuses = ["GREEN", "YELLOW", "RED"]
-                    print(f"[T_LIGHT_STATUS]: {statuses[bp._tl_dict[tl[0]]]}")
+                    print(f"[T_LIG_STATUS]: {statuses[bp._tl_dict[tl[0]]]}")
                 else:
-                    print(f"[T_LIGHT_POS]: None", end='\t')
-                    print(f"[T_LIGHT_YAW]: None", end='\t')
-                    print(f"[T_LIGHT_STATUS]: None")
+                    print(f"[T_LIG_POS]: (XXX.XX, XXX.XX)", end='\t')
+                    print(f"[T_LIG_YAW]: X.XX deg", end='\t')
+                    print(f"[T_LIG_STATUS]: X.XX m/s")
 
                 # Compute the goal state set from the behavioural planner's computed goal state.
                 goal_state_set = lp.get_goal_state_set(bp._goal_index, bp._goal_state, waypoints, ego_state)
