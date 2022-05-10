@@ -41,17 +41,18 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
-VIEWING_CAMERA = True
+VIEWING_CAMERA = False
+USE_CAMERA = False
 
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 96 #20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 150 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 250     # total number of pedestrians to spawn
-NUM_VEHICLES           = 250        # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 1      # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
+PLAYER_START_INDEX = 54 #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 17 #40# 133 #61   #142      # Setting a Destination HERE
+NUM_PEDESTRIANS        = 100     # total number of pedestrians to spawn
+NUM_VEHICLES           = 151        # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
+SEED_VEHICLES          = 77301      # seed for vehicle spawn randomizer
 ###############################################################################àà
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -230,7 +231,8 @@ def make_carla_settings(args):
     camera0.set_position(cam_x_pos, cam_y_pos, cam_height)
     camera0.set_rotation(camera_pitch, camera_roll, camera_yaw)
 
-    settings.add_sensor(camera0)
+    if USE_CAMERA:
+        settings.add_sensor(camera0)
 
     return settings
 
@@ -802,7 +804,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         # live plotter is disabled, hide windows
         if not enable_live_plot:
-            #lp_traj._root.withdraw()
+            lp_traj._root.withdraw()
             lp_1d._root.withdraw()        
 
 
@@ -1139,7 +1141,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 # set by the options
                 if enable_live_plot and \
                    live_plot_timer.has_exceeded_lap_period():
-                    #lp_traj.refresh()
+                    lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
             
