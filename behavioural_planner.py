@@ -140,6 +140,9 @@ class BehaviouralPlanner:
         pedestrian_lookahaed = 5 if angle_difference > 15 and angle_difference < 345 else self._lookahead
         separation_distance = self._lookahead 
 
+        print("[BP.trastion_state] pedestrian lookahaed",pedestrian_lookahaed)
+
+
         if self._state == FOLLOW_LANE:
             # First, find the closest index to the ego vehicle.
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
@@ -189,7 +192,7 @@ class BehaviouralPlanner:
                 wp_speed = 0
                 self._state = DECELERATE_TO_STOP
                        
-            self._current_traffic_light = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,self._lookahead,looksideways_right=3.5)
+            self._current_traffic_light = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,self._lookahead,looksideways_right=4.5)
             status = None
 
             traffic_light_on_path = len(self._current_traffic_light)>0
