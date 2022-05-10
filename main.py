@@ -22,6 +22,10 @@ import json
 from math import sin, cos, pi, tan, sqrt
 from vehicle import Vehicle
 
+import os
+
+
+
 # Script level imports
 sys.path.append(os.path.abspath(sys.path[0] + '/..'))
 import live_plotter as lv   # Custom live plotting library
@@ -62,6 +66,8 @@ TOTAL_FRAME_BUFFER     = 300    # number of frames to buffer after total runtime
 CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # used to make sure the server loads
                                 # consistently
+
+WINDOWS_OS = os.name == 'nt'
 
 WEATHERID = {
     "DEFAULT": 0,
@@ -977,6 +983,55 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 # Perform a state transition in the behavioural planner.
                 bp.transition_state(waypoints, ego_state, current_speed)
+
+                if WINDOWS_OS:
+                    os.system("cls")
+                else:
+                    os.system("clear")
+
+                print("LOGINFO\n")
+
+                print(f"[CURRENT_STATE]: {bp._state}", end="\t")
+                if collided_flag:
+                    print("[COLLISION]: Yes")
+                else:
+                    print("[COLLISION]: No")
+
+                print(f"[EGO_POS]: ({round(current_x, 2)}, {round(current_y, 2)})", end='\t')
+                print(f"[EGO_YAW]: {round(current_yaw*180/math.pi, 2)} deg", end='\t')
+                print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")
+
+                print(f"[PED_POS]: (XXX.XX, XXX.XX)", end='\t')
+                print(f"[PED_YAW]: X.XX deg", end='\t')
+                print(f"[PED_SPEED]: X.XX m/s")
+
+                leader = bp._lead_vehicle
+                if leader is None:
+                    print(f"[LEADER_POS]: None", end='\t')
+                    print(f"[LEADER_YAW]: None", end='\t')
+                    print(f"[LEADER_SPEED]: None")
+                else:
+                    leader_pos = leader.get_position()
+                    print(f"[LEADER_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
+                    print(f"[LEADER_YAW]: {round(leader.get_orientation()*180/math.pi, 2)}", end='\t')
+                    print(f"[LEADER_SPEED]: {round(leader.get_speed(), 2)}")
+
+                tl = bp._current_traffic_light
+                if len(tl) != 0:
+                    print(f"[T_LIGHT_POS]: ({round(tl[1],2)}, {round(tl[2],2)})", end='\t')
+                    print(f"[T_LIGHT_YAW]: {round(tl[3],2)} deg", end='\t')
+                    status = bp._tl_dict[tl[0]]
+                    if status == 0:
+                        status = "GREEN"
+                    elif status == 1:
+                        status = "YELLOW"
+                    else:
+                        status = "RED"
+                    print(f"[T_LIGHT_STATUS]: {status}")
+                else:
+                    print(f"[T_LIGHT_POS]: None", end='\t')
+                    print(f"[T_LIGHT_YAW]: None", end='\t')
+                    print(f"[T_LIGHT_STATUS]: None")
 
                 # Compute the goal state set from the behavioural planner's computed goal state.
                 goal_state_set = lp.get_goal_state_set(bp._goal_index, bp._goal_state, waypoints, ego_state)

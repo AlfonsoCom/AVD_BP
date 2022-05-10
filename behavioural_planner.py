@@ -131,14 +131,6 @@ class BehaviouralPlanner:
         separation_distance = compute_separation_distance(closed_loop_speed)+max(closed_loop_speed,10) # add 5 meters (defines it better) due to the fact that we cannot break
         
         
-        print("\n[BP.TRANSITION_STATE] CURRENT STATE -> " ,STATES[self._state])
-
-        print("[BP.transition_state] pedestrian_looksideways_left ->",pedestrian_looksideways_left)
-        print("[BP.transition_state] pedestrian_looksideways_right ->",pedestrian_looksideways_right)
-        print("[BP.transition_state] look a head ->",self._lookahead)
-        print("[BP.transition_state] separation distance ->",separation_distance)
-
-
         
 
         if self._count % N_FRAMES == 0:
@@ -179,10 +171,7 @@ class BehaviouralPlanner:
                 if not self._follow_lead_vehicle :
                     self._lead_vehicle = None
 
-            print("[BP.transition_state] lead_vehicle -> ", self._follow_lead_vehicle,self._lead_vehicle)
-            if self._lead_vehicle:
-                print("[BP.transition_state] lead_vehicle speed -> ", self._lead_vehicle.get_speed())
-                print("[BP.transition_state] ego speed -> ", closed_loop_speed)
+           
 
             goal_index_pd = goal_index
             goal_index_tl = goal_index
@@ -195,7 +184,6 @@ class BehaviouralPlanner:
                 
 
             if pedestrain_detected:
-                print("[BP.transition_state] PEDESTRIAN DETECTED")
                 if closed_loop_speed > STOP_THRESHOLD:
                     goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 wp_speed = 0
@@ -209,7 +197,6 @@ class BehaviouralPlanner:
 
                 id = self._current_traffic_light[0]
                 status = self._tl_dict[id]     
-                print(f"[BP.transition_state] TRAFFIC LIGHT DETECTED:\nPOSITION {self._current_traffic_light[1:3]}\t STATUS: {status}")        
                 if status != GREEN:
                     stop = True
                     if status == YELLOW:
@@ -228,7 +215,6 @@ class BehaviouralPlanner:
             goal_index = goal_index_pd if goal_index_pd < goal_index_tl else goal_index_tl
 
             wp = [waypoints[goal_index][0],waypoints[goal_index][1],wp_speed]
-            print("[BP.transition_state] wp_speed ->",wp_speed)
             self._goal_index = goal_index
             self._goal_state = wp                  
 
@@ -272,7 +258,6 @@ class BehaviouralPlanner:
             
             #wp = [ waypoints[goal_index][0],waypoints[goal_index][1],waypoints[goal_index][2]]
             if pedestrain_detected:
-                print("[BP.transition_state] PEDESTRIAN DETECTED")
 
                 goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 
@@ -284,7 +269,6 @@ class BehaviouralPlanner:
             if traffic_light_on_path:
 
                 id = self._current_traffic_light[0]
-                print(f"[BP.transition_state] TRAFFIC LIGHT DETECTED:\nPOSITION {self._current_traffic_light[1:3]}\t STATUS: {self._tl_dict[id]}")        
 
                 if self._tl_dict[id] != GREEN :
                     tl_position = self._current_traffic_light[1:3]
@@ -300,10 +284,7 @@ class BehaviouralPlanner:
                 self._state = FOLLOW_LANE
                 return
 
-            print("[BP.transition_state.DECELERATE_TO_STOP] goal_index ", goal_index)
-            print("[BP.transition_state.DECELERATE_TO_STOP] goal_index_pd ", goal_index_pd)
-            print("[BP.transition_state.DECELERATE_TO_STOP] goal_index_tl ", goal_index_tl)
-
+           
 
             # define goal index according the fact that a pedestrain could be located nearest to the car than
             # the traffic light or viceversa
@@ -323,7 +304,6 @@ class BehaviouralPlanner:
             check_pedestrian_collision, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
             self._pedestrians,lookahead=self._lookahead,looksideways_right=BASE_LOOKSIDEWAYS_RIGHT,looksideways_left=BASE_LOOKSIDEWAYS_LEFT)
 
-            print("[BP.TRANSITION_STATE.STAY_STOPPED] Check pedestrian",check_pedestrian_collision)
 
             # check if there is a red traffic light 
             traffic_light_on_path = len(self._current_traffic_light)>0
@@ -331,7 +311,6 @@ class BehaviouralPlanner:
             if traffic_light_on_path:
                 id = self._current_traffic_light[0]
                 traffic_light_stop = self._tl_dict[id] != GREEN
-                print("[BP.TRANSITION_STATE.STAY_STOPPED] traffic_light GREEN->", not traffic_light_on_path )
 
 
             #traffic_light_condition = True if self._tl_id is None else self._tl_dict[self._tl_id] == GREEN
@@ -347,7 +326,6 @@ class BehaviouralPlanner:
         else:
             raise ValueError('Invalid state value.')
         
-        print("[BP.transistion_state] closest_wp_index - goal_wp_index ", closest_index,self._goal_index )
 
   
     def get_goal_index(self, waypoints, ego_state, closest_len, closest_index):
@@ -658,7 +636,6 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
 
     tl = traffic_lights[index_tl_in_bb]
    
-    print("[BP.check_traffic_light] THERE ARE SOME TL DETECTED ->",len(tl)!=0)
 
     if len(tl)==0:
         return []
@@ -670,8 +647,6 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     THRESHOLD_DEGREE = 3
     
     ego_yaw = ego_yaw*180/math.pi
-    print("[BP.check_traffic_light] TL YAW ->", tl[:,3])
-    print("[BP.check_traffic_light] EGO YAW ->", ego_yaw)
     # 180 - ( traffic_lights_yaw + car_yaw)
     #index_tl_opposite = np.where( np.abs(REFERENCE_ANGLE-(np.abs(tl[:,3])+abs(ego_yaw))) <= THRESHOLD_DEGREE)[0]
     check_sum_90 = np.abs(90-np.abs(tl[:,3]+ego_yaw))<=THRESHOLD_DEGREE
@@ -680,7 +655,6 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     tl = tl[check] # This line allows to filter elements that satisfy "check" condition (that's a boolean array)
     
 
-    print("[BP.check_traffic_light] THERE ARE SOME TL WITH OPPOSITE ORIENTATION ->",len(tl)!=0)
     
     if len(tl) == 0:
         return [] 
@@ -692,7 +666,6 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     norm = np.linalg.norm(dist,axis = 1)
     index_tl = np.argmin(norm)
 
-    print("[BP.check_traffic_light] INFO NEAREST TL ->",tl[index_tl])
 
     return tl[index_tl] # return the nearest traffic light
 
@@ -736,7 +709,6 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
     bb = Polygon([A,B,C,D,A])
     
-    print("[BP.CHECK_PEDESTRIANS] ego (x,y,teta): ", ego_pos,ego_yaw)
     # numpy array pedestrians
     pds  = pedestrians
     pds_boolean = pds == None
@@ -771,12 +743,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     if len(pds)!=0:
         pds = pds.reshape((-1,4))
 
-    if flag:
-        print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_position ->",pd_position)
-        print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_speed ->",pd_speed)
-        print("[BP.CHECK_PEDESTRIAN] pd_collided_pedestrian_orientation ->",pd_orientation)
-        print("[BP.CHECK_PEDESTRIAN] pds.shape ->",pds.shape)
-
+   
     pedestrian_collided = False 
 
     car_stop_position = ego_pos
