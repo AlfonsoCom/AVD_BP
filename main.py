@@ -1001,14 +1001,14 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 leader = bp._lead_vehicle
                 if leader is None:
-                    print(f"[LEADER_POS]: (XXX.XX, XXX.XX)", end='\t')
-                    print(f"[LEADER_YAW]: X.XX deg", end='\t')
-                    print(f"[LEADER_SPEED]: X.XX m/s")
+                    print(f"[LEAD_POS]: (XXX.XX, XXX.XX)", end='\t')
+                    print(f"[LEAD_YAW]: X.XX deg", end='\t')
+                    print(f"[LEAD_SPEED]: X.XX m/s")
                 else:
                     leader_pos = leader.get_position()
-                    print(f"[LEADER_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
-                    print(f"[LEADER_YAW]: {round(leader.get_orientation(), 2)}", end='\t')
-                    print(f"[LEADER_SPEED]: {round(leader.get_speed(), 2)}")
+                    print(f"[LEAD_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
+                    print(f"[LEAD_YAW]: {round(leader.get_orientation(), 2)} deg", end='\t')
+                    print(f"[LEAD_SPEED]: {round(leader.get_speed(), 2)} m/s")
 
                 tl = bp._current_traffic_light
                 if len(tl) != 0:
