@@ -187,6 +187,7 @@ class BehaviouralPlanner:
                 
 
             if pedestrain_detected:
+                print("[BP.trasistion_state] pedestrian_detected")
                 if closed_loop_speed > STOP_THRESHOLD:
                     goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 wp_speed = 0
@@ -261,7 +262,8 @@ class BehaviouralPlanner:
             
             #wp = [ waypoints[goal_index][0],waypoints[goal_index][1],waypoints[goal_index][2]]
             if pedestrain_detected:
-
+                print("[BP.trasistion_state] pedestrian_detected")
+                
                 goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 
                 #wp = [ waypoints[goal_index][0],waypoints[goal_index][1],0]
@@ -306,7 +308,7 @@ class BehaviouralPlanner:
             # cehck if there are some pedetrian along car trajectory
             check_pedestrian_collision, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
             self._pedestrians,lookahead=self._lookahead,looksideways_right=BASE_LOOKSIDEWAYS_RIGHT,looksideways_left=BASE_LOOKSIDEWAYS_LEFT)
-
+            
 
             # check if there is a red traffic light 
             traffic_light_on_path = len(self._current_traffic_light)>0
