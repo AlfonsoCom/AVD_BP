@@ -563,7 +563,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 5.0
+        desired_speed = 10.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -982,20 +982,18 @@ def exec_waypoint_nav_demo(args, host, port):
                 else:
                     os.system("clear")
 
-                print(f"[LOGINFO]: from {args.start} to {args.dest}\n")
+                print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {desired_speed}")
+                print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}\t{SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}\t{SEED_VEHICLES}\n")
 
                 states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
-                print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
-                if collided_flag:
-                    print("[COLLISION]: Yes")
-                else:
-                    print("[COLLISION]: No")
+                print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t\t")
+                print(f"[COLLISION]: {'Yes' if collided_flag else 'No'}")
 
                 print(f"[EGO_POS]: ({round(current_x, 2)}, {round(current_y, 2)})", end='\t')
                 print(f"[EGO_YAW]: {round(current_yaw*180/math.pi, 2)} deg", end='\t')
                 print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")
 
-                print(f"[PEDESTRIAN_DETECTED]: {bp._pedestrian_detected}")
+                print(f"[PEDESTRIAN_DETECTED]: {'Yes' if bp._pedestrian_detected else 'No'}")
                 # print(f"[PED_POS]: (XXX.XX, XXX.XX)", end='\t')
                 # print(f"[PED_YAW]: X.XX deg", end='\t')
                 # print(f"[PED_SPEED]: X.XX m/s")
