@@ -49,10 +49,10 @@ USE_CAMERA = True
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 14  #20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 148 #40# 133 #61   #142      # Setting a Destination HERE
+PLAYER_START_INDEX = 20  #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 40 #40# 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
-NUM_VEHICLES           = 75        # total number of vehicles to spawn
+NUM_VEHICLES           = 250        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 77301      # seed for vehicle spawn randomizer
 ###############################################################################
