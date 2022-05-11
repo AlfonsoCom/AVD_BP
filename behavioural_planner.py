@@ -179,7 +179,7 @@ class BehaviouralPlanner:
                 
             self._pedestrian_detected = pedestrain_detected
             if pedestrain_detected:
-                print("[BP.trasistion_state] pedestrian_detected")
+                #print("[BP.trasistion_state] pedestrian_detected")
                 if closed_loop_speed > STOP_THRESHOLD:
                     goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 wp_speed = 0
@@ -250,7 +250,7 @@ class BehaviouralPlanner:
 
             
             if pedestrain_detected:
-                print("[BP.trasistion_state] pedestrian_detected")
+                #print("[BP.trasistion_state] pedestrian_detected")
                 
                 goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 
