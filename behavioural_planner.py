@@ -732,6 +732,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     pedestrian_collided = False 
 
     car_stop_position = ego_pos
+   
 
     # if ego_speed < STOP_THRESHOLD and len(pds)!=0:
     #    # print("pds",pds)
@@ -743,7 +744,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
         PEDESTRIAN_SPEED_THRESHOLD = 0.2
         for pd in pds:
             pd_speed = pd[3]
-
+            next_car_center = ego_pos
             if pd_speed > PEDESTRIAN_SPEED_THRESHOLD:
                 delta_t = PEDESTRIAN_TRAVELLED_DISTANCE/pd_speed
                 ego_travelled_distance = delta_t * ego_speed
@@ -824,7 +825,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     #         car_stop_position = next_car_center
     
 
-    return flag and pedestrian_collided, car_stop_position
+    return flag, car_stop_position
 
 
 def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.5,looksideways_left=1.5):
