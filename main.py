@@ -55,7 +55,7 @@ NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
 NUM_VEHICLES           = 75        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 77301      # seed for vehicle spawn randomizer
-###############################################################################àà
+###############################################################################
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
 WAIT_TIME_BEFORE_START = 1.00   # game seconds (time before controller start)
@@ -1208,7 +1208,8 @@ def exec_waypoint_nav_demo(args, host, port):
             
             last_time = time.time()
             if frame % LP_FREQUENCY_DIVISOR == 0:
-                print(f"[ELAPSED_TIME]: {round(last_time-prev_time,2)}")
+                pass
+                #print(f"[ELAPSED_TIME]: {round(last_time-prev_time,2)}")
             prev_time = last_time
             if  dist_to_last_waypoint < DIST_THRESHOLD_TO_LAST_WAYPOINT:
                 reached_the_end = True

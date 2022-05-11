@@ -127,10 +127,10 @@ class BehaviouralPlanner:
         pedestrian_looksideways_right = min(BASE_LOOKSIDEWAYS_RIGHT+closed_loop_speed/1.8,MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT)
         
         # 2.5 is the speed that car try to follow when it is making a turn
-        pedestrian_lookahaed = 8 if closed_loop_speed < 2.5 else self._lookahead
+        pedestrian_lookahead = 8 if closed_loop_speed < 2.5 else self._lookahead
         separation_distance = self._lookahead 
 
-        print("[BP.trastion_state] pedestrian lookahaed",pedestrian_lookahaed)
+        #print("[BP.transition_state] pedestrian lookahead",pedestrian_lookahead)
 
 
         if self._state == FOLLOW_LANE:
@@ -171,7 +171,7 @@ class BehaviouralPlanner:
 
             ### check pedestrian intersection
             pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
-                self._pedestrians,lookahead= pedestrian_lookahaed,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
+                self._pedestrians,lookahead= pedestrian_lookahead,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
             # pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
             #     self._pedestrians,self._lookahead,looksideways_right=2.5,looksideways_left=4)
                 
@@ -243,7 +243,7 @@ class BehaviouralPlanner:
             goal_index_pd = goal_index
             goal_index_tl = goal_index
             
-            pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=pedestrian_lookahaed,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
+            pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=pedestrian_lookahead,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
             self._pedestrian_detected = pedestrain_detected
 
             
