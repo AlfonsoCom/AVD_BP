@@ -171,7 +171,7 @@ class BehaviouralPlanner:
 
             ### check pedestrian intersection
             pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
-                self._pedestrians,lookahead= pedestrian_lookahaed,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
+                self._pedestrians,lookahead= pedestrian_lookahead,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
             # pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
             #     self._pedestrians,self._lookahead,looksideways_right=2.5,looksideways_left=4)
                 
@@ -246,7 +246,7 @@ class BehaviouralPlanner:
             goal_index_pd = goal_index
             goal_index_tl = goal_index
             
-            pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=pedestrian_lookahaed,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
+            pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=pedestrian_lookahead,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
             self._pedestrian_detected = pedestrain_detected
 
             
