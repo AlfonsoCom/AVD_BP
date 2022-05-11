@@ -55,7 +55,7 @@ NUM_PEDESTRIANS        = 1000000     # total number of pedestrians to spawn
 NUM_VEHICLES           = 151        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 77301      # seed for vehicle spawn randomizer
-###############################################################################àà
+###############################################################################
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
 WAIT_TIME_BEFORE_START = 1.00   # game seconds (time before controller start)
