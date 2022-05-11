@@ -51,10 +51,10 @@ USE_CAMERA = True
 ###############################################################################
 PLAYER_START_INDEX = 20  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 40 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
-NUM_VEHICLES           = 250        # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 77301      # seed for vehicle spawn randomizer
+NUM_PEDESTRIANS        = 150     # total number of pedestrians to spawn
+NUM_VEHICLES           = 150        # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 2      # seed for pedestrian spawn randomizer
+SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
 ###############################################################################
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -563,7 +563,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 10.0
+        desired_speed = 5.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()

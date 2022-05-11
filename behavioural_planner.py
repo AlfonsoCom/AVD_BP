@@ -19,8 +19,6 @@ GREEN = 0
 YELLOW = 1
 RED = 2
 
-# semicircle radius used to detect traffic lights
-RADIUS = 50 # metres
 
 BASE_LOOKSIDEWAYS_RIGHT = 3
 BASE_LOOKSIDEWAYS_LEFT = 3
@@ -159,7 +157,7 @@ class BehaviouralPlanner:
                 id = self._lead_vehicle.get_id()
                 self._lead_vehicle = self._vehicles_dict[id]
                 self._follow_lead_vehicle_lookahead = separation_distance
-                self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],np.array([self._lead_vehicle],dtype=object),separation_distance)
+                self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],np.array([self._lead_vehicle],dtype=object),separation_distance+10)
 
                 #self.check_for_lead_vehicle(ego_state, self._lead_vehicle.get_position())
                 if self._lead_vehicle is  None:
@@ -828,7 +826,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             car_stop_position = next_car_center
     
 
-    return flag, car_stop_position
+    return flag and pedestrian_collided, car_stop_position
 
 
 def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.5,looksideways_left=1.5):
