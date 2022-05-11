@@ -49,8 +49,8 @@ USE_CAMERA = True
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 136  #20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
+PLAYER_START_INDEX = 54  #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 17 #40# 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 100     # total number of pedestrians to spawn
 NUM_VEHICLES           = 151        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
@@ -563,7 +563,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 15.0
+        desired_speed = 10.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -995,9 +995,10 @@ def exec_waypoint_nav_demo(args, host, port):
                 print(f"[EGO_YAW]: {round(current_yaw*180/math.pi, 2)} deg", end='\t')
                 print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")
 
-                print(f"[PED_POS]: (XXX.XX, XXX.XX)", end='\t')
-                print(f"[PED_YAW]: X.XX deg", end='\t')
-                print(f"[PED_SPEED]: X.XX m/s")
+                print(f"[PEDESTRIAN_DETECTED]: {bp._pedestrian_detected}")
+                # print(f"[PED_POS]: (XXX.XX, XXX.XX)", end='\t')
+                # print(f"[PED_YAW]: X.XX deg", end='\t')
+                # print(f"[PED_SPEED]: X.XX m/s")
 
                 leader = bp._lead_vehicle
                 if leader is None:

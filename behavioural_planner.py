@@ -29,7 +29,6 @@ BASE_LOOKSIDEWAYS_LEFT = 1.5
 MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT = 4
 MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT = 3.15
 
-N_FRAMES = 15
 
 class BehaviouralPlanner:
     def __init__(self, lookahead, lead_vehicle_lookahead,traffic_lights,tl_dict,pedestrians=[], vehicles = []):
@@ -50,8 +49,7 @@ class BehaviouralPlanner:
         self._vehicles                      = vehicles
         self._lead_vehicle                  = None
         self._vehicles_dict                 = None
-        self._count                         = 0 # this variable is used to count the number of bp executions
-        self._last_car_angle                = 0
+        self._pedestrian_detected           = False
 
 
     def set_lookahead(self, lookahead):
@@ -128,16 +126,8 @@ class BehaviouralPlanner:
         pedestrian_looksideways_left = min(BASE_LOOKSIDEWAYS_LEFT+closed_loop_speed/1.8,MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT)
         pedestrian_looksideways_right = min(BASE_LOOKSIDEWAYS_RIGHT+closed_loop_speed/1.8,MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT)
         
-        separation_distance = compute_separation_distance(closed_loop_speed)+max(closed_loop_speed,10) # add 5 meters (defines it better) due to the fact that we cannot break
-        
-        
-        
-
-        if self._count % N_FRAMES == 0:
-            self._last_car_angle = ego_state[2]
-
-        angle_difference = self._last_car_angle - ego_state[2]
-        pedestrian_lookahaed = 5 if angle_difference > 15 and angle_difference < 345 else self._lookahead
+        # 2.5 is the speed that car try to follow when it is making a turn
+        pedestrian_lookahaed = 8 if closed_loop_speed < 2.5 else self._lookahead
         separation_distance = self._lookahead 
 
         print("[BP.trastion_state] pedestrian lookahaed",pedestrian_lookahaed)
@@ -185,7 +175,7 @@ class BehaviouralPlanner:
             # pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
             #     self._pedestrians,self._lookahead,looksideways_right=2.5,looksideways_left=4)
                 
-
+            self._pedestrian_detected = pedestrain_detected
             if pedestrain_detected:
                 print("[BP.trasistion_state] pedestrian_detected")
                 if closed_loop_speed > STOP_THRESHOLD:
@@ -257,10 +247,9 @@ class BehaviouralPlanner:
             goal_index_tl = goal_index
             
             pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=pedestrian_lookahaed,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
+            self._pedestrian_detected = pedestrain_detected
 
-            # pedestrain_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,self._lookahead,looksideways_right=2.5,looksideways_left=4)
             
-            #wp = [ waypoints[goal_index][0],waypoints[goal_index][1],waypoints[goal_index][2]]
             if pedestrain_detected:
                 print("[BP.trasistion_state] pedestrian_detected")
                 
@@ -308,6 +297,9 @@ class BehaviouralPlanner:
             # cehck if there are some pedetrian along car trajectory
             check_pedestrian_collision, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
             self._pedestrians,lookahead=self._lookahead,looksideways_right=BASE_LOOKSIDEWAYS_RIGHT,looksideways_left=BASE_LOOKSIDEWAYS_LEFT)
+            
+            self._pedestrian_detected = check_pedestrian_collision
+
             
 
             # check if there is a red traffic light 
@@ -717,9 +709,6 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     # numpy array pedestrians
     pds  = pedestrians
     pds_boolean = pds == None
-    pd_position  = []
-    pd_speed = None
-    pd_orientation = None
     flag = False
     for i,pd in enumerate(pds):
         # get pedestrian bb
@@ -732,9 +721,6 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             if bb.contains(vertex):
                 flag = True
                 pds_boolean[i] = True
-                pd_position = pd[1]
-                pd_speed = pd[-1]
-                pd_orientation = pd[2]
                 break
         
       
