@@ -439,7 +439,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         # Refer to the player start folder in the WorldOutliner to see the 
         # player start information
-        player_start = PLAYER_START_INDEX
+        player_start = args.start   
 
         # Notify the server that we want to start the episode at the
         # player_start index. This function blocks until the server is ready
@@ -547,8 +547,8 @@ def exec_waypoint_nav_demo(args, host, port):
         #############################################
         # Settings Waypoints
         #############################################
-        starting    = scene.player_start_spots[PLAYER_START_INDEX]
-        destination = scene.player_start_spots[DESTINATION_INDEX]
+        starting    = scene.player_start_spots[args.start]
+        destination = scene.player_start_spots[args.dest]
 
         # Starting position is the current position
         # (x, y, z, pitch, roll, yaw)
@@ -982,7 +982,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 else:
                     os.system("clear")
 
-                print("LOGINFO\n")
+                print(f"[LOGINFO]: from {args.start} to {args.dest}\n")
 
                 states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
                 print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
@@ -1238,8 +1238,9 @@ def main():
 
     Args:
         -v, --verbose: print debug information
-        --host: IP of the host server (default: localhost)
-        -p, --port: TCP port to listen to (default: 2000)
+        -l, --local: use local server
+        -s, --start: player start index
+        -d, --dest: player destination index
         -a, --autopilot: enable autopilot
         -q, --quality-level: graphics quality level [Low or Epic]
         -i, --images-to-disk: save images to disk
@@ -1256,17 +1257,18 @@ def main():
         action='store_true',
         dest = 'local'
     )
-    # argparser.add_argument(
-    #     '--host',
-    #     metavar='H',
-    #     default='localhost',
-    #     help='IP of the host server (default: localhost)')
-    # argparser.add_argument(
-    #     '-p', '--port',
-    #     metavar='P',
-    #     default=2000,
-    #     type=int,
-    #     help='TCP port to listen to (default: 2000)')
+    argparser.add_argument(
+        '-s', '--start',
+        metavar='S',
+        default=44,
+        type=int,
+        help='Player start index')
+    argparser.add_argument(
+        '-d', '--dest',
+        metavar='D',
+        default=68,
+        type=int,
+        help='Player destination index')
     argparser.add_argument(
         '-a', '--autopilot',
         action='store_true',
