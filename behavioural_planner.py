@@ -750,7 +750,6 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
                 BOUNDING_BOX_LENGTH = 2.3 # approximately half car lenght 
                 BOUNDING_BOX_WIDTH = 1.5
                 #Computes N_FRAME according lookahead
-                print("[BP.check_point] ego distance", ego_travelled_distance, pd)
                 n_frames = int(lookahead / ego_travelled_distance)
                 
                 for i in range(n_frames):
@@ -778,7 +777,10 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             if pedestrian_collided:
                 break
         
-            car_stop_position = next_car_center
+            dist = np.subtract(car_stop_position,next_car_center)
+            norm = np.linalg.norm(dist)
+            if norm >=2.3:
+                car_stop_position = next_car_center
     
 
 
