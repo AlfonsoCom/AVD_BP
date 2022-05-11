@@ -822,8 +822,6 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.
     THRESHOLD_DEGREE = 3.5
     
     ego_yaw = ego_yaw*180/math.pi
-    # 180 - ( traffic_lights_yaw + car_yaw)
-    #index_tl_opposite = np.where( np.abs(REFERENCE_ANGLE-(np.abs(tl[:,3])+abs(ego_yaw))) <= THRESHOLD_DEGREE)[0]
     vehicles_boolean = vehicles == None
 
     for i, vehicle in enumerate(vehicles):

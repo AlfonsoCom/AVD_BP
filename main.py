@@ -49,10 +49,10 @@ USE_CAMERA = True
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 17  #20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 136 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 100     # total number of pedestrians to spawn
-NUM_VEHICLES           = 151        # total number of vehicles to spawn
+PLAYER_START_INDEX = 14  #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 148 #40# 133 #61   #142      # Setting a Destination HERE
+NUM_PEDESTRIANS        = 250     # total number of pedestrians to spawn
+NUM_VEHICLES           = 100        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 77301      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -808,7 +808,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         # live plotter is disabled, hide windows
         if not enable_live_plot:
-           # lp_traj._root.withdraw()
+            lp_traj._root.withdraw()
             lp_1d._root.withdraw()        
 
 
@@ -1185,7 +1185,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 # set by the options
                 if enable_live_plot and \
                    live_plot_timer.has_exceeded_lap_period():
-                    #lp_traj.refresh()
+                    lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
             
