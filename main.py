@@ -1208,8 +1208,7 @@ def exec_waypoint_nav_demo(args, host, port):
             
             last_time = time.time()
             if frame % LP_FREQUENCY_DIVISOR == 0:
-                pass
-                #print(f"[ELAPSED_TIME]: {round(last_time-prev_time,2)}")
+                print(f"[ELAPSED_TIME]: {round(last_time-prev_time,2)}")
             prev_time = last_time
             if  dist_to_last_waypoint < DIST_THRESHOLD_TO_LAST_WAYPOINT:
                 reached_the_end = True

@@ -160,9 +160,11 @@ class BehaviouralPlanner:
                 id = self._lead_vehicle.get_id()
                 self._lead_vehicle = self._vehicles_dict[id]
                 self._follow_lead_vehicle_lookahead = separation_distance
-                self.check_for_lead_vehicle(ego_state, self._lead_vehicle.get_position())
-                if not self._follow_lead_vehicle :
-                    self._lead_vehicle = None
+                self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],np.array([self._lead_vehicle],dtype=object),separation_distance)
+
+                #self.check_for_lead_vehicle(ego_state, self._lead_vehicle.get_position())
+                if self._lead_vehicle is  None:
+                    self._follow_lead_vehicle = False
 
            
 
