@@ -127,10 +127,10 @@ class BehaviouralPlanner:
         pedestrian_looksideways_right = min(BASE_LOOKSIDEWAYS_RIGHT+closed_loop_speed/1.8,MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT)
         
         # 2.5 is the speed that car try to follow when it is making a turn
-        pedestrian_lookahaed = 8 if closed_loop_speed < 2.5 else self._lookahead
+        pedestrian_lookahead = 8 if closed_loop_speed < 2.5 else self._lookahead
         separation_distance = self._lookahead 
 
-        print("[BP.trastion_state] pedestrian lookahaed",pedestrian_lookahaed)
+        #print("[BP.transition_state] pedestrian lookahead",pedestrian_lookahead)
 
 
         if self._state == FOLLOW_LANE:

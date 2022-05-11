@@ -49,9 +49,9 @@ USE_CAMERA = True
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 17  #20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 136 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 100     # total number of pedestrians to spawn
+PLAYER_START_INDEX = 120  #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 104 #40# 133 #61   #142      # Setting a Destination HERE
+NUM_PEDESTRIANS        = 1000000     # total number of pedestrians to spawn
 NUM_VEHICLES           = 151        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 47581      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 77301      # seed for vehicle spawn randomizer
@@ -808,7 +808,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         # live plotter is disabled, hide windows
         if not enable_live_plot:
-           # lp_traj._root.withdraw()
+            lp_traj._root.withdraw()
             lp_1d._root.withdraw()        
 
 
@@ -1185,7 +1185,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 # set by the options
                 if enable_live_plot and \
                    live_plot_timer.has_exceeded_lap_period():
-                    #lp_traj.refresh()
+                    lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
             
@@ -1208,7 +1208,8 @@ def exec_waypoint_nav_demo(args, host, port):
             
             last_time = time.time()
             if frame % LP_FREQUENCY_DIVISOR == 0:
-                print(f"[ELAPSED_TIME]: {round(last_time-prev_time,2)}")
+                pass
+                #print(f"[ELAPSED_TIME]: {round(last_time-prev_time,2)}")
             prev_time = last_time
             if  dist_to_last_waypoint < DIST_THRESHOLD_TO_LAST_WAYPOINT:
                 reached_the_end = True
