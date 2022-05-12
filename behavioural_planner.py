@@ -716,8 +716,8 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     car_stop_position = ego_pos
    
 
-    if ego_speed < STOP_THRESHOLD and len(pds)!=0:
-        return True, []
+    # if ego_speed < STOP_THRESHOLD and len(pds)!=0:
+    #     return True, []
 
     if ego_speed > STOP_THRESHOLD:
         PEDESTRIAN_TRAVELLED_DISTANCE = 0.5 # 0.5 metres pedestrian travelled distance in each frame 
