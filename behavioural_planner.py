@@ -13,6 +13,7 @@ STATES = ["FOLLOW_LANE","DECELERATE_TO_STOP","STAY_STOPPED"]
 # Stop speed threshold
 STOP_THRESHOLD = 0.5
 
+COUNT_THRESHOLD = 7
 
 # traffic light status
 GREEN = 0
@@ -47,6 +48,7 @@ class BehaviouralPlanner:
         self._lead_vehicle                  = None
         self._vehicles_dict                 = None
         self._pedestrian_detected           = False
+        self._count                         = 0
 
 
     def set_lookahead(self, lookahead):
@@ -266,8 +268,12 @@ class BehaviouralPlanner:
             # this condition is when the car has previusly detected a pedestrain on the road
             # and than this pedestrian goes out of road. 
             if not pedestrian_detected and not traffic_light_on_path:
-                self._state = FOLLOW_LANE
-                return
+                if self._count == COUNT_THRESHOLD:
+                    self._state = FOLLOW_LANE
+                    self._count == 0
+                    return
+                else:
+                    self._count += 1
 
             # define goal index according the fact that a pedestrain could be located nearest to the car than
             # the traffic light or viceversa
