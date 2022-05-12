@@ -1,3 +1,4 @@
 __pycache__/
 .mypy_cache/
 AVD_course_codebase.zip
+options.cfg
