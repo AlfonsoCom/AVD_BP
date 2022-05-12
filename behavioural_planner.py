@@ -48,7 +48,6 @@ class BehaviouralPlanner:
         self._lead_vehicle                  = None
         self._vehicles_dict                 = None
         self._pedestrian_detected           = False
-        self._count                         = 0
 
 
     def set_lookahead(self, lookahead):
@@ -122,8 +121,6 @@ class BehaviouralPlanner:
         # complete, and examine the check_for_stop_signs() function to
         # understand it.
         closest_index = None
-        # pedestrian_looksideways_left = min(BASE_LOOKSIDEWAYS_LEFT+closed_loop_speed/1.8,MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT)
-        # pedestrian_looksideways_right = min(BASE_LOOKSIDEWAYS_RIGHT+closed_loop_speed/1.8,MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT)
         pedestrian_looksideways_left = MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT
         pedestrian_looksideways_right = MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT
         
@@ -169,8 +166,7 @@ class BehaviouralPlanner:
             ### check pedestrian intersection
             pedestrian_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
                 self._pedestrians,lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
-            # pedestrian_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
-            #     self._pedestrians,self._lookahead,looksideways_right=2.5,looksideways_left=4)
+
                 
             self._pedestrian_detected = pedestrian_detected
             if pedestrian_detected:
@@ -200,12 +196,6 @@ class BehaviouralPlanner:
                         wp_speed = 0
                         self._state = DECELERATE_TO_STOP
             
-            # define goal index according the fact that a pedestrain could be located nearest to the car than
-            # the traffic light or viceversa.
-            print(f"[CLOSEST_INDEX]: {closest_index}", end='\t')
-            print(f"[GOAL_INDEX]: {goal_index}")
-            print(f"[GOAL_INDEX_PED]: {goal_index_pd}", end='\t')
-            print(f"[GOAL_INDEX_T_LIG]: {goal_index_tl}\n")
             goal_index = min(goal_index, goal_index_pd,goal_index_tl)
 
             wp = [waypoints[goal_index][0],waypoints[goal_index][1],wp_speed]
@@ -221,10 +211,6 @@ class BehaviouralPlanner:
 
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-
-
-            
-
 
             # if new goal_index is greater than last goal_index we don't update the current goal_index
             # because in this state the aim is to decelerate and stop the car.
@@ -267,22 +253,11 @@ class BehaviouralPlanner:
             # this condition is when the car has previusly detected a pedestrain on the road
             # and than this pedestrian goes out of road. 
             if not pedestrian_detected and not traffic_light_on_path:
-                if self._count == COUNT_THRESHOLD:
                     self._state = FOLLOW_LANE
-                    self._count == 0
                     return
-                else:
-                    self._count += 1
 
             # define goal index according the fact that a pedestrain could be located nearest to the car than
             # the traffic light or viceversa
-            print(f"[CLOSEST_IDX]: {closest_index}", end='\t')
-            print(f"[GOAL_IDX]: {goal_index}")
-            print(f"[GOAL_IDX_CAR]: {goal_index_car}", end='\t')
-            print(f"[GOAL_IDX_PED]: {goal_index_pd}", end='\t')
-            print(f"[GOAL_IDX_T_LIG]: {goal_index_tl}\n")
-
-
             goal_index = min(goal_index,goal_index_car,goal_index_pd,goal_index_tl)
 
             wp = [ waypoints[goal_index][0],waypoints[goal_index][1],0]
