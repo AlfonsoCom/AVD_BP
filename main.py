@@ -981,17 +981,18 @@ def exec_waypoint_nav_demo(args, host, port):
                 else:
                     os.system("clear")
 
+                print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
+                print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
 
                 # Perform a state transition in the behavioural planner.
                 bp.transition_state(waypoints, ego_state, current_speed)
 
-               
-                print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
-                print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
-
                 states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
                 print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
                 print(f"[COLLISION]: {'Yes' if collided_flag else 'No'}")
+
+                print(f"[CLOSEST_IDX]: {}", end='\t')
+                print(f"[GOAL_IDX]: {}", end='\t')
 
                 print(f"[EGO_POS]: ({round(current_x, 2)}, {round(current_y, 2)})", end='\t')
                 print(f"[EGO_YAW]: {round(current_yaw*180/math.pi, 2)} deg", end='\t')
