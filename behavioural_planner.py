@@ -216,6 +216,25 @@ class BehaviouralPlanner:
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
 
+
+            if not self._follow_lead_vehicle:
+                # If no lead vehicle is already known search for a lead vehicle to follow
+
+                self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],self._vehicles,self._lookahead )
+               
+                # if a lead vehicle is detected set true follow_lead_vehicle flag
+                if self._lead_vehicle is not None:
+                    self._follow_lead_vehicle = True
+            else:
+                # If a lead vehicle is known checks if it is still a lead vehicle 
+                id = self._lead_vehicle.get_id()
+                self._lead_vehicle = self._vehicles_dict[id]
+                self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],np.array([self._lead_vehicle],dtype=object),self._follow_lead_vehicle_lookahead+10)
+
+                #self.check_for_lead_vehicle(ego_state, self._lead_vehicle.get_position())
+                if self._lead_vehicle is  None:
+                    self._follow_lead_vehicle = False
+
             # if new goal_index is greater than last goal_index we don't update the current goal_index
             # because in this state the aim is to decelerate and stop the car.
             # we update the current goal index if the new goal index is smaller or  the latest goal_index
@@ -764,7 +783,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
             
             next_car_center = compute_point_along_direction(ego_pos,ego_yaw,distance)
             # compute new car bounding_box
-            A,B,C,D = compute_bb_verteces(next_car_center,distance_along_car_direction,ego_yaw,b=1.5,b1=1.5)
+            A,B,C,D = compute_bb_verteces(next_car_center,distance,ego_yaw,b=1.5,b1=1.5)
             bb = Polygon([A,B,C,D,A])
         
             # (4,) [list,[x,y],speed,yaw]
@@ -792,7 +811,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     return flag and pedestrian_collided, car_stop_position
 
 
-def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.5,looksideways_left=1.5):
+def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.5,looksideways_left=1.5):
     if len(vehicles)==0:
         return None
 
@@ -826,7 +845,7 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=1.
     vehicles_boolean = vehicles == None
 
     for i, vehicle in enumerate(vehicles):
-        check_sum = abs(ego_yaw - vehicle.get_orientation()*180/math.pi)
+        check_sum = abs(ego_yaw - vehicle.get_orientation())
         if check_sum < THRESHOLD_DEGREE or check_sum > 360 - THRESHOLD_DEGREE:
             vehicles_boolean[i] = True
     
