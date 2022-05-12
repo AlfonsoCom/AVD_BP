@@ -217,23 +217,8 @@ class BehaviouralPlanner:
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
 
 
-            if not self._follow_lead_vehicle:
-                # If no lead vehicle is already known search for a lead vehicle to follow
+            
 
-                self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],self._vehicles,self._lookahead )
-               
-                # if a lead vehicle is detected set true follow_lead_vehicle flag
-                if self._lead_vehicle is not None:
-                    self._follow_lead_vehicle = True
-            else:
-                # If a lead vehicle is known checks if it is still a lead vehicle 
-                id = self._lead_vehicle.get_id()
-                self._lead_vehicle = self._vehicles_dict[id]
-                self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],np.array([self._lead_vehicle],dtype=object),self._follow_lead_vehicle_lookahead+10)
-
-                #self.check_for_lead_vehicle(ego_state, self._lead_vehicle.get_position())
-                if self._lead_vehicle is  None:
-                    self._follow_lead_vehicle = False
 
             # if new goal_index is greater than last goal_index we don't update the current goal_index
             # because in this state the aim is to decelerate and stop the car.
@@ -247,7 +232,14 @@ class BehaviouralPlanner:
             # we chose the goal index to stop according the fact that         
             goal_index_pd = goal_index
             goal_index_tl = goal_index
+            goal_index_car = goal_index 
             
+            vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],self._vehicles,self._lookahead )
+            if vehicle != None:
+                car_stop = vehicle.get_position()
+                goal_index_car  = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
+
+
             pedestrian_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=self._lookahead,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
             self._pedestrian_detected = pedestrian_detected
 
@@ -274,7 +266,7 @@ class BehaviouralPlanner:
 
             # define goal index according the fact that a pedestrain could be located nearest to the car than
             # the traffic light or viceversa
-            goal_index = goal_index_pd if goal_index_pd < goal_index_tl else goal_index_tl
+            goal_index = min(goal_index_car,goal_index_pd,goal_index_tl)
 
             wp = [ waypoints[goal_index][0],waypoints[goal_index][1],0]
             self._goal_index = goal_index
@@ -719,93 +711,93 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     # if ego_speed < STOP_THRESHOLD and len(pds)!=0:
     #     return True, []
 
-    if ego_speed > STOP_THRESHOLD:
-        PEDESTRIAN_TRAVELLED_DISTANCE = 0.5 # 0.5 metres pedestrian travelled distance in each frame 
-        PEDESTRIAN_SPEED_THRESHOLD = 0.2
-        for pd in pds:
-            pd_speed = pd[3]
-            next_car_center = ego_pos
-            if pd_speed > PEDESTRIAN_SPEED_THRESHOLD:
-                delta_t = PEDESTRIAN_TRAVELLED_DISTANCE/pd_speed
-                ego_travelled_distance = delta_t * ego_speed
-                BOUNDING_BOX_LENGTH = 5 # approximately half car lenght 
-                BOUNDING_BOX_WIDTH = 1.5
-                #Computes N_FRAME according lookahead
-                n_frames = int(lookahead / ego_travelled_distance)
+    # if ego_speed > STOP_THRESHOLD:
+    #     PEDESTRIAN_TRAVELLED_DISTANCE = 0.5 # 0.5 metres pedestrian travelled distance in each frame 
+    #     PEDESTRIAN_SPEED_THRESHOLD = 0.2
+    #     for pd in pds:
+    #         pd_speed = pd[3]
+    #         next_car_center = ego_pos
+    #         if pd_speed > PEDESTRIAN_SPEED_THRESHOLD:
+    #             delta_t = PEDESTRIAN_TRAVELLED_DISTANCE/pd_speed
+    #             ego_travelled_distance = delta_t * ego_speed
+    #             BOUNDING_BOX_LENGTH = 5 # approximately half car lenght 
+    #             BOUNDING_BOX_WIDTH = 1.5
+    #             #Computes N_FRAME according lookahead
+    #             n_frames = int(lookahead / ego_travelled_distance)
                 
-                for i in range(n_frames):
-                    # compute new car center according frames already computed and delta t 
-                    distance = (i+1)*ego_travelled_distance
-                    next_car_center = compute_point_along_direction(ego_pos,ego_yaw,distance)
-                    # compute new car bounding_box
+    #             for i in range(n_frames):
+    #                 # compute new car center according frames already computed and delta t 
+    #                 distance = (i+1)*ego_travelled_distance
+    #                 next_car_center = compute_point_along_direction(ego_pos,ego_yaw,distance)
+    #                 # compute new car bounding_box
 
-                    A,B,C,D = compute_bb_verteces(next_car_center,BOUNDING_BOX_LENGTH,ego_yaw,b=BOUNDING_BOX_WIDTH, b1 = BOUNDING_BOX_LENGTH)
-                    bb = Polygon([A,B,C,D,A])
+    #                 A,B,C,D = compute_bb_verteces(next_car_center,BOUNDING_BOX_LENGTH,ego_yaw,b=BOUNDING_BOX_WIDTH, b1 = BOUNDING_BOX_LENGTH)
+    #                 bb = Polygon([A,B,C,D,A])
 
-                    pedestrian_bb = pd[0]
+    #                 pedestrian_bb = pd[0]
                 
-                    pedestrian_orientation = pd[2]
-                    pedestrian_distance = (i+1)*PEDESTRIAN_TRAVELLED_DISTANCE
-                    for bb_vertex in pedestrian_bb:
-                        new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,pedestrian_distance)
-                        point = Point(new_vertex)
-                        if bb.contains(point):
-                            pedestrian_collided = True
-                        break 
-                    # stop to simulate collision with current pedestrian
-                    if pedestrian_collided:
-                        break
-            if pedestrian_collided:
-                break
+    #                 pedestrian_orientation = pd[2]
+    #                 pedestrian_distance = (i+1)*PEDESTRIAN_TRAVELLED_DISTANCE
+    #                 for bb_vertex in pedestrian_bb:
+    #                     new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,pedestrian_distance)
+    #                     point = Point(new_vertex)
+    #                     if bb.contains(point):
+    #                         pedestrian_collided = True
+    #                     break 
+    #                 # stop to simulate collision with current pedestrian
+    #                 if pedestrian_collided:
+    #                     break
+    #         if pedestrian_collided:
+    #             break
         
-            dist = np.subtract(car_stop_position,next_car_center)
-            norm = np.linalg.norm(dist)
-            if norm >=10:
-                car_stop_position = next_car_center
+    #         dist = np.subtract(car_stop_position,next_car_center)
+    #         norm = np.linalg.norm(dist)
+    #         if norm >=10:
+    #             car_stop_position = next_car_center
     
 
 
 
-    # # Step 2 compute pedestrian and vehicle trajectory
-    # if ego_speed > STOP_THRESHOLD:
-    #     # we notice that in general, bounding box vehicle in carla has a x value around 2.3 
-    #     distance_along_car_direction = 2.3 # distance from the current car position to next position with fixed orientation
+    # Step 2 compute pedestrian and vehicle trajectory
+    if ego_speed > STOP_THRESHOLD:
+        # we notice that in general, bounding box vehicle in carla has a x value around 2.3 
+        distance_along_car_direction = 2.3 # distance from the current car position to next position with fixed orientation
         
-    #     # Computes N_FRAME according lookahead
-    #     N_FRAMES = int(lookahead / distance_along_car_direction)
+        # Computes N_FRAME according lookahead
+        N_FRAMES = int(lookahead / distance_along_car_direction)
 
-    #     delta_t = distance_along_car_direction/ego_speed
+        delta_t = distance_along_car_direction/ego_speed
 
         
-    #     for i in range(N_FRAMES):
-    #         # compute new car center according frames already computed and delta t 
-    #         distance = (i+1)*distance_along_car_direction
+        for i in range(N_FRAMES):
+            # compute new car center according frames already computed and delta t 
+            distance = (i+1)*distance_along_car_direction
             
-    #         next_car_center = compute_point_along_direction(ego_pos,ego_yaw,distance)
-    #         # compute new car bounding_box
-    #         A,B,C,D = compute_bb_verteces(next_car_center,distance,ego_yaw,b=1.5,b1=1.5)
-    #         bb = Polygon([A,B,C,D,A])
+            next_car_center = compute_point_along_direction(ego_pos,ego_yaw,distance)
+            # compute new car bounding_box
+            A,B,C,D = compute_bb_verteces(next_car_center,distance,ego_yaw,b=1.5,b1=1.5)
+            bb = Polygon([A,B,C,D,A])
         
-    #         # (4,) [list,[x,y],speed,yaw]
-    #         for pd in pds:
+            # (4,) [list,[x,y],yaw,speed]
+            for pd in pds:
                 
-    #             distance_along_pedestrian_direction = pd[3] * delta_t*(i+1)
-    #             # get bounding box in time t and from this computes new bounding box 
-    #             pedestrian_bb = pd[0]
+                distance_along_pedestrian_direction = pd[3] * delta_t*(i+1)
+                # get bounding box in time t and from this computes new bounding box 
+                pedestrian_bb = pd[0]
                 
-    #             pedestrian_orientation = pd[2]
-    #             for bb_vertex in pedestrian_bb:
-    #                 new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,distance_along_pedestrian_direction)
-    #                 point = Point(new_vertex)
-    #                 if bb.contains(point):
-    #                     pedestrian_collided = True
-    #                     break
-    #             if pedestrian_collided:
-    #                 break
+                pedestrian_orientation = pd[2]
+                for bb_vertex in pedestrian_bb:
+                    new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,distance_along_pedestrian_direction)
+                    point = Point(new_vertex)
+                    if bb.contains(point):
+                        pedestrian_collided = True
+                        break
+                if pedestrian_collided:
+                    break
                 
-    #         if pedestrian_collided:
-    #             break
-    #         car_stop_position = next_car_center
+            if pedestrian_collided:
+                break
+            car_stop_position = next_car_center
     
 
     return flag and pedestrian_collided, car_stop_position
