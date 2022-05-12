@@ -44,7 +44,7 @@ LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
 VIEWING_CAMERA = True
-USE_CAMERA = True
+USE_CAMERA = False
 
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
