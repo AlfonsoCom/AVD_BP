@@ -200,7 +200,12 @@ class BehaviouralPlanner:
             
             # define goal index according the fact that a pedestrain could be located nearest to the car than
             # the traffic light or viceversa.
-            goal_index = goal_index_pd if goal_index_pd < goal_index_tl else goal_index_tl
+            # print("[BP.transistion_state.decelerate_to_stop] closest_index ->",closest_index)
+
+            # print("[BP.transistion_state.decelerate_to_stop] goal_index ->",goal_index)
+            # print("[BP.transistion_state.decelerate_to_stop] goal_index_pd ->",goal_index_pd)
+            # print("[BP.transistion_state.decelerate_to_stop] goal_index_tl ->",goal_index_tl)
+            goal_index = min(goal_index, goal_index_pd,goal_index_tl)
 
             wp = [waypoints[goal_index][0],waypoints[goal_index][1],wp_speed]
             self._goal_index = goal_index
@@ -227,7 +232,7 @@ class BehaviouralPlanner:
             # the new stop goal index will be the closest_index.    
             if goal_index>self._goal_index:
                 goal_index = self._goal_index
-
+            
 
             # we chose the goal index to stop according the fact that         
             goal_index_pd = goal_index
@@ -266,7 +271,14 @@ class BehaviouralPlanner:
 
             # define goal index according the fact that a pedestrain could be located nearest to the car than
             # the traffic light or viceversa
-            goal_index = min(goal_index_car,goal_index_pd,goal_index_tl)
+            # print("[BP.transistion_state.decelerate_to_stop] closest_index ->",closest_index)
+            # print("[BP.transistion_state.decelerate_to_stop] goal_index ->",goal_index)
+            # print("[BP.transistion_state.decelerate_to_stop] goal_index_car ->",goal_index_car)
+            # print("[BP.transistion_state.decelerate_to_stop] goal_index_pd ->",goal_index_pd)
+            # print("[BP.transistion_state.decelerate_to_stop] goal_index_tl ->",goal_index_tl)
+
+
+            goal_index = min(goal_index,goal_index_car,goal_index_pd,goal_index_tl)
 
             wp = [ waypoints[goal_index][0],waypoints[goal_index][1],0]
             self._goal_index = goal_index
@@ -761,7 +773,7 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     # Step 2 compute pedestrian and vehicle trajectory
     if ego_speed > STOP_THRESHOLD:
         # we notice that in general, bounding box vehicle in carla has a x value around 2.3 
-        distance_along_car_direction = 2.3 # distance from the current car position to next position with fixed orientation
+        distance_along_car_direction = 2.1 # distance from the current car position to next position with fixed orientation
         
         # Computes N_FRAME according lookahead
         N_FRAMES = int(lookahead / distance_along_car_direction)

@@ -49,8 +49,8 @@ USE_CAMERA = True
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 20  #20 #89 #148   #91        #  spawn index for player
-DESTINATION_INDEX = 40 #40# 133 #61   #142      # Setting a Destination HERE
+PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
+DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
 NUM_PEDESTRIANS        = 750     # total number of pedestrians to spawn
 NUM_VEHICLES           = 150        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 2      # seed for pedestrian spawn randomizer
@@ -976,14 +976,16 @@ def exec_waypoint_nav_demo(args, host, port):
                 # Set lookahead based on current speed.
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
 
-                # Perform a state transition in the behavioural planner.
-                bp.transition_state(waypoints, ego_state, current_speed)
-
                 if WINDOWS_OS:
                     os.system("cls")
                 else:
                     os.system("clear")
 
+
+                # Perform a state transition in the behavioural planner.
+                bp.transition_state(waypoints, ego_state, current_speed)
+
+               
                 print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
                 print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
 
