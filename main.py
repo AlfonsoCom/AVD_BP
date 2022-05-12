@@ -51,7 +51,7 @@ USE_CAMERA = True
 ###############################################################################
 PLAYER_START_INDEX = 20  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 40 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 150     # total number of pedestrians to spawn
+NUM_PEDESTRIANS        = 750     # total number of pedestrians to spawn
 NUM_VEHICLES           = 150        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 2      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
@@ -64,6 +64,8 @@ TOTAL_FRAME_BUFFER     = 300    # number of frames to buffer after total runtime
 CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # used to make sure the server loads
                                 # consistently
+
+DESIRED_SPEED = 10.0
 
 WINDOWS_OS = os.name == 'nt'
 
@@ -563,7 +565,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 10.0
+        desired_speed = DESIRED_SPEED
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -982,7 +984,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 else:
                     os.system("clear")
 
-                print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {desired_speed} m/s")
+                print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
                 print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
 
                 states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
