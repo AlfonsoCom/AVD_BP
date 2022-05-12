@@ -991,9 +991,6 @@ def exec_waypoint_nav_demo(args, host, port):
                 print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
                 print(f"[COLLISION]: {'Yes' if collided_flag else 'No'}")
 
-                print(f"[CLOSEST_IDX]: {}", end='\t')
-                print(f"[GOAL_IDX]: {}", end='\t')
-
                 print(f"[EGO_POS]: ({round(current_x, 2)}, {round(current_y, 2)})", end='\t')
                 print(f"[EGO_YAW]: {round(current_yaw*180/math.pi, 2)} deg", end='\t')
                 print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")

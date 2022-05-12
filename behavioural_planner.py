@@ -202,11 +202,10 @@ class BehaviouralPlanner:
             
             # define goal index according the fact that a pedestrain could be located nearest to the car than
             # the traffic light or viceversa.
-            # print("[BP.transistion_state.decelerate_to_stop] closest_index ->",closest_index)
-
-            # print("[BP.transistion_state.decelerate_to_stop] goal_index ->",goal_index)
-            # print("[BP.transistion_state.decelerate_to_stop] goal_index_pd ->",goal_index_pd)
-            # print("[BP.transistion_state.decelerate_to_stop] goal_index_tl ->",goal_index_tl)
+            print(f"[CLOSEST_INDEX]: {closest_index}", end='\t')
+            print(f"[GOAL_INDEX]: {goal_index}")
+            print(f"[GOAL_INDEX_PED]: {goal_index_pd}", end='\t')
+            print(f"[GOAL_INDEX_T_LIG]: {goal_index_tl}\n")
             goal_index = min(goal_index, goal_index_pd,goal_index_tl)
 
             wp = [waypoints[goal_index][0],waypoints[goal_index][1],wp_speed]
@@ -279,9 +278,9 @@ class BehaviouralPlanner:
             # the traffic light or viceversa
             print(f"[CLOSEST_IDX]: {closest_index}", end='\t')
             print(f"[GOAL_IDX]: {goal_index}")
-            # print("[BP.transistion_state.decelerate_to_stop] goal_index_car ->",goal_index_car)
-            # print("[BP.transistion_state.decelerate_to_stop] goal_index_pd ->",goal_index_pd)
-            # print("[BP.transistion_state.decelerate_to_stop] goal_index_tl ->",goal_index_tl)
+            print(f"[GOAL_IDX_CAR]: {goal_index_car}", end='\t')
+            print(f"[GOAL_IDX_PED]: {goal_index_pd}", end='\t')
+            print(f"[GOAL_IDX_T_LIG]: {goal_index_tl}\n")
 
 
             goal_index = min(goal_index,goal_index_car,goal_index_pd,goal_index_tl)
