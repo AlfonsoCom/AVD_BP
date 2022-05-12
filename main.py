@@ -65,7 +65,7 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # used to make sure the server loads
                                 # consistently
 
-DESIRED_SPEED = 10.0
+DESIRED_SPEED = 5.0
 
 WINDOWS_OS = os.name == 'nt'
 
