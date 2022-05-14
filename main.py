@@ -10,7 +10,6 @@ import logging
 import time
 import math
 import numpy as np
-import csv
 import matplotlib.pyplot as plt
 from numpy.core.defchararray import index
 import controller2d
@@ -18,7 +17,6 @@ import configparser
 import local_planner
 import behavioural_planner
 import cv2
-import json 
 from math import sin, cos, pi, tan, sqrt
 from vehicle import Vehicle
 
@@ -527,12 +525,7 @@ def exec_waypoint_nav_demo(args, host, port):
         # Frame-by-Frame Iteration and Initialization
         #############################################
         # Store pose history starting from the start position
-        measurement_data, sensor_data = client.read_data()
-
-        # for agent in measurement_data.non_player_agents:
-        #     if agent.HasField('vehicle'):
-        #         print(agent.vehicle.forward_speed)
-                
+        measurement_data, sensor_data = client.read_data()            
 
 
 
@@ -852,7 +845,6 @@ def exec_waypoint_nav_demo(args, host, port):
         prev_collision_pedestrians = 0
         prev_collision_other       = 0
 
-        prev_time = time.time()
 
         vehicles_dict = {}
         for frame in range(TOTAL_EPISODE_FRAMES):
@@ -929,7 +921,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
                         dist = np.subtract([current_x,current_y], [location.x,location.y])
                         norm = np.linalg.norm(dist)
-                        # filter only vehicle that are in a radiud of 30 metres
+                        # filter only vehicle that are in a radiud of AGENTS_CHECK_RADIUS metres
                         
                         if norm < AGENTS_CHECK_RADIUS:
                             id = agent.id
@@ -1135,8 +1127,6 @@ def exec_waypoint_nav_demo(args, host, port):
                 if len(obstacles) > 0:
                     x = obstacles[:,:,0]
                     y = obstacles[:,:,1]
-                    #x = np.reshape(x, x.shape[0] * x.shape[1])
-                    #y = np.reshape(y, y.shape[0] * y.shape[1])
 
                     trajectory_fig.roll("obstacles_points", x, y)
 
@@ -1189,9 +1179,6 @@ def exec_waypoint_nav_demo(args, host, port):
                     lp_1d.refresh()
                     live_plot_timer.lap()
             
-            # visualize car location in the world
-            # if frame % (LP_FREQUENCY_DIVISOR*3) == 0:
-            #     print(f"x = {x_history[-1]}\ty = {y_history[-1]}\tyaw = {yaw_history[-1]}")
 
             # Output controller command to CARLA server
             send_control_command(client,
@@ -1206,11 +1193,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 waypoints[-1][0] - current_x,
                 waypoints[-1][1] - current_y]))
             
-            last_time = time.time()
-            if frame % LP_FREQUENCY_DIVISOR == 0:
-                #print(f"[ELAPSED_TIME]: {round(last_time-prev_time,2)}")
-                pass
-            prev_time = last_time
+            
             if  dist_to_last_waypoint < DIST_THRESHOLD_TO_LAST_WAYPOINT:
                 reached_the_end = True
             if reached_the_end:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from cv2 import distanceTransformWithLabels
 import numpy as np
 import math
 from shapely.geometry import Point, Polygon
@@ -41,7 +40,6 @@ class BehaviouralPlanner:
         self._lookahead_collision_index     = 0
         self._traffic_lights                = traffic_lights
         self._tl_dict                       = tl_dict
-        #self._tl_id                         = None
         self._current_traffic_light         = []
         self._pedestrians                   = pedestrians
         self._vehicles                      = vehicles
@@ -107,8 +105,6 @@ class BehaviouralPlanner:
         useful_constants:
             STOP_THRESHOLD  : Stop speed threshold (m). The vehicle should fully
                               stop when its speed falls within this threshold.
-            STOP_COUNTS     : Number of cycles (simulation iterations) 
-                              before moving from stop sign.
         """
         # In this state, continue tracking the lane by finding the
         # goal index in the waypoint list that is within the lookahead
@@ -548,8 +544,6 @@ def compute_bb_verteces(p,a,p_orientation,b,b1=None):
         p_orientation car orientation 
     """
 
-    # p_orientation = p_orientation*pi/180
-
     if p_orientation >= 0 and p_orientation <= math.pi/2:
         p_orientation = math.pi/2 - p_orientation
         return compute_bb_verteces_parametrics(p,a,p_orientation,b,b1,sign_x2=-1)
@@ -609,8 +603,6 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     THRESHOLD_DEGREE = 3
     
     ego_yaw = ego_yaw*180/math.pi
-    # 180 - ( traffic_lights_yaw + car_yaw)
-    #index_tl_opposite = np.where( np.abs(REFERENCE_ANGLE-(np.abs(tl[:,3])+abs(ego_yaw))) <= THRESHOLD_DEGREE)[0]
     check_sum_90 = np.abs(90-np.abs(tl[:,3]+ego_yaw))<=THRESHOLD_DEGREE
     check_sum_270 = np.abs(270-np.abs(tl[:,3]+ego_yaw))<=THRESHOLD_DEGREE
     check = np.logical_or(check_sum_90,check_sum_270)
@@ -678,8 +670,6 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     for i,pd in enumerate(pds):
         # get pedestrian bb
         pedestrian_bb_verteces = pd[0]
-        
-
         for bb_vertex in pedestrian_bb_verteces:
             
             vertex = Point(bb_vertex)
@@ -698,62 +688,11 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     pedestrian_collided = False 
 
     car_stop_position = ego_pos
-   
-
-    # if ego_speed < STOP_THRESHOLD and len(pds)!=0:
-    #     return True, []
-
-    # if ego_speed > STOP_THRESHOLD:
-    #     PEDESTRIAN_TRAVELLED_DISTANCE = 0.5 # 0.5 metres pedestrian travelled distance in each frame 
-    #     PEDESTRIAN_SPEED_THRESHOLD = 0.2
-    #     for pd in pds:
-    #         pd_speed = pd[3]
-    #         next_car_center = ego_pos
-    #         if pd_speed > PEDESTRIAN_SPEED_THRESHOLD:
-    #             delta_t = PEDESTRIAN_TRAVELLED_DISTANCE/pd_speed
-    #             ego_travelled_distance = delta_t * ego_speed
-    #             BOUNDING_BOX_LENGTH = 5 # approximately half car lenght 
-    #             BOUNDING_BOX_WIDTH = 1.5
-    #             #Computes N_FRAME according lookahead
-    #             n_frames = int(lookahead / ego_travelled_distance)
-                
-    #             for i in range(n_frames):
-    #                 # compute new car center according frames already computed and delta t 
-    #                 distance = (i+1)*ego_travelled_distance
-    #                 next_car_center = compute_point_along_direction(ego_pos,ego_yaw,distance)
-    #                 # compute new car bounding_box
-
-    #                 A,B,C,D = compute_bb_verteces(next_car_center,BOUNDING_BOX_LENGTH,ego_yaw,b=BOUNDING_BOX_WIDTH, b1 = BOUNDING_BOX_LENGTH)
-    #                 bb = Polygon([A,B,C,D,A])
-
-    #                 pedestrian_bb = pd[0]
-                
-    #                 pedestrian_orientation = pd[2]
-    #                 pedestrian_distance = (i+1)*PEDESTRIAN_TRAVELLED_DISTANCE
-    #                 for bb_vertex in pedestrian_bb:
-    #                     new_vertex = compute_point_along_direction(bb_vertex,pedestrian_orientation,pedestrian_distance)
-    #                     point = Point(new_vertex)
-    #                     if bb.contains(point):
-    #                         pedestrian_collided = True
-    #                     break 
-    #                 # stop to simulate collision with current pedestrian
-    #                 if pedestrian_collided:
-    #                     break
-    #         if pedestrian_collided:
-    #             break
-        
-    #         dist = np.subtract(car_stop_position,next_car_center)
-    #         norm = np.linalg.norm(dist)
-    #         if norm >=10:
-    #             car_stop_position = next_car_center
-    
-
-
 
     # Step 2 compute pedestrian and vehicle trajectory
     if ego_speed > STOP_THRESHOLD:
         # we notice that in general, bounding box vehicle in carla has a x value around 2.3 
-        distance_along_car_direction = 2.1 # distance from the current car position to next position with fixed orientation
+        distance_along_car_direction = 2.3 # distance from the current car position to next position with fixed orientation
         
         # Computes N_FRAME according lookahead
         N_FRAMES = int(lookahead / distance_along_car_direction)
@@ -851,7 +790,4 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.
     
     return vehicles[nearest_car_index] if nearest_car_index is not None else None
             
-# def compute_separation_distance(ego_speed):
-#     kmh_speed = ego_speed * 3.6
-#     separation_distance = math.pow((kmh_speed/10),2)
-#     return separation_distance
+
