@@ -19,7 +19,7 @@ import local_planner
 import behavioural_planner
 import cv2
 from math import sin, cos, pi, tan, sqrt
-from vehicle import Vehicle
+from vehicle import Agent
 
 import os
 
@@ -487,6 +487,9 @@ def exec_waypoint_nav_demo(args, host, port):
         # is enabled.
         measurement_data, sensor_data = client.read_data()
 
+        car_extent_x = measurement_data.player_measurements.bounding_box.extent.x
+        car_extent_y = measurement_data.player_measurements.bounding_box.extent.y
+
         # get traffic light information
         traffic_lights = [] #[id, [x,y],yaw]
         for agent in measurement_data.non_player_agents:
@@ -915,10 +918,11 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            pedestrians.append([bb,
-                                                [location.x,location.y],
-                                                orientation.yaw*math.pi/180,
-                                                agent.pedestrian.forward_speed])
+                            orientation = orientation.yaw*math.pi/180
+                            speed = agent.pedestrian.forward_speed
+                            pedestrian = Agent(agent.id,location,bb,orientation,speed,"Pedestrian")
+                            pedestrians.append(pedestrian)
+
                     if agent.HasField("vehicle"):
                         location = agent.vehicle.transform.location
                         dimensions = agent.vehicle.bounding_box.extent
@@ -934,7 +938,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            vehicle = Vehicle(id,location,bb,orientation,speed)
+                            vehicle = Agent(id,location,bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
                             vehicles_dict[id] = vehicle 
 

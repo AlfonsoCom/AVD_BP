@@ -1,10 +1,12 @@
 import numpy as np
 import math
 from utils import *
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, Polygon, LineString
 
 # Stop speed threshold
 STOP_THRESHOLD = 0.5
+# value to add to CAR ROI 
+CAR_LATERAL_MARGIN = 0.5
 
 def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideways_right,looksideways_left):
     
@@ -84,3 +86,55 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
     
 
     return flag and pedestrian_collided, car_stop_position
+
+
+def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index):
+    
+    if len(pedestrians)==0:
+        return False,[]
+
+    # Step 1 filter pedetrians in bb
+    A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
+    bb = Polygon([A,B,C,D,A])
+    
+    # numpy array pedestrians
+    pds  = pedestrians
+    pds_boolean = pds == None
+    flag = False
+    for i,pd in enumerate(pds):
+        # get pedestrian bb
+        pedestrian_bb_verteces = pd.get_bounding_box()
+        for bb_vertex in pedestrian_bb_verteces:
+            
+            vertex = Point(bb_vertex)
+            if bb.contains(vertex):
+                flag = True
+                pds_boolean[i] = True
+                break
+        
+      
+    # considered only pedestrians inside bounding box
+    pds = pds[pds_boolean]
+    
+    start_point = ego_pos
+    intersected = False
+    index = closest_index
+    # plus one so in this way also goal index is used to check intersection
+    for index in range(closest_index,goal_index+1):
+        next_point = waypoints[index][:2]
+        car_path = LineString([start_point,next_point])
+        pd_distance = 10 # in further work udapte this
+        for pd in pds:
+            pd_start_point = pd.get_position()
+            pd_next_point = compute_point_along_direction(pd_start_point,pd.get_orientation(),pd_distance)
+            pd_path = LineString([pd_start_point,pd_next_point])
+            intersected = pd_path.intersects(car_path)
+            if intersected:
+                return intersected,index
+        start_point = next_point
+
+    return intersected,index
+        
+
+
+        
