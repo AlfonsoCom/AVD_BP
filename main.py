@@ -13,6 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.core.defchararray import index
 import controller2d
+#import controller2d_AR as controller2d  
 import configparser 
 import local_planner
 import behavioural_planner
@@ -49,8 +50,8 @@ USE_CAMERA = True
 ###############################################################################
 PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 750     # total number of pedestrians to spawn
-NUM_VEHICLES           = 150        # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 1000     # total number of pedestrians to spawn
+NUM_VEHICLES           = 1        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 2      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
 ###############################################################################
@@ -660,6 +661,10 @@ def exec_waypoint_nav_demo(args, host, port):
         
 
         waypoints = np.array(waypoints)
+        print("[MAIN] n waypoints -> ", len(waypoints))
+        with open("waypoints.txt","w") as f:
+            for x,y,v in waypoints:
+                f.writelines(f"{x}, {y}, {v}\n")
 
         #############################################
         # Controller 2D Class Declaration

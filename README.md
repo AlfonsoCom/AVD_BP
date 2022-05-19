@@ -1,10 +1,9 @@
 "# AVD_BP" 
 
 HOW TO RUN
-in this folder run:
 
 python main.py 
-required parameters:
+Parameters:
 -s [start_index][required] 
 -d [destination_index][required] 
--l [run with local server][optional]
+-l [run using local server][optional]
