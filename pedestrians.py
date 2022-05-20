@@ -122,7 +122,13 @@ def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,
     # plus one so in this way also goal index is used to check intersection
     for index in range(closest_index,goal_index+1):
         next_point = waypoints[index][:2]
-        car_path = LineString([start_point,next_point])
+        v_diff = np.subtract(next_point,start_point)
+        norm = np.linalg.norm(v_diff)
+        orientation = math.atan2(v_diff[1],v_diff[0])
+        car_extent_y = 1.5
+        A,B,C,D = compute_bb_verteces(pd_start_point,norm,orientation,car_extent_y)
+        car_path = Polygon([A,B,C,D,A])
+        #car_path = LineString([start_point,next_point])
         pd_distance = 10 # in further work udapte this
         for pd in pds:
             pd_start_point = pd.get_position()
