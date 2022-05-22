@@ -1,7 +1,9 @@
 import numpy as np
 import math
+from pedestrians import CAR_LATERAL_MARGIN
 from utils import *
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, Polygon, LineString
+
 
 def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.5,looksideways_left=1.5):
     if len(vehicles)==0:
@@ -58,3 +60,74 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.
             nearest_car_index = i
     
     return vehicles[nearest_car_index] if nearest_car_index is not None else None
+
+
+
+def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index,lead_vehicle):
+    
+    if len(vehicles)==0:
+        return False,[]
+
+    # Step 1 filter pedetrians in bb
+    A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
+    bb = Polygon([A,B,C,D,A])
+    
+    # numpy array pedestrians
+    
+    vehicles_boolean = vehicles == None
+    flag = False
+    for i,v in enumerate(vehicles):
+        vehicles_bb_verteces = v.get_bounding_box()
+        for bb_vertex in vehicles_bb_verteces:
+            
+            vertex = Point(bb_vertex)
+            if bb.contains(vertex):
+                flag = True
+                vehicles_boolean[i] = True
+                break
+        
+    # considered only pedestrians inside bounding box
+    vehicles = vehicles[vehicles_boolean]
+
+    # STEP 2 in the case where no lead vehicle are in the scene we check only for car in direction 
+    # discording to us (ONLY in FOLLOW_LANE STATE) 
+
+    if lead_vehicle: 
+
+        THRESHOLD_DEGREE = 3.5
+        
+        ego_yaw = ego_yaw*180/math.pi
+        vehicles_boolean = vehicles == None
+
+        for i, vehicle in enumerate(vehicles):
+            check_sum = abs(ego_yaw - vehicle.get_orientation())
+            if check_sum > THRESHOLD_DEGREE and check_sum < 360 - THRESHOLD_DEGREE:
+                vehicles_boolean[i] = True
+        
+        vehicles = vehicles[vehicles_boolean]
+    
+    start_point = ego_pos
+    intersected = False
+    index = closest_index
+    # plus one so in this way also goal index is used to check intersection
+    for index in range(closest_index,goal_index+1):
+        next_point = waypoints[index][:2]
+        v_diff = np.subtract(next_point,start_point)
+        norm = np.linalg.norm(v_diff)
+        orientation = math.atan2(v_diff[1],v_diff[0])
+        car_extent_y = 1.5
+        A,B,C,D = compute_bb_verteces(start_point,norm,orientation,car_extent_y+CAR_LATERAL_MARGIN)
+        car_path = Polygon([A,B,C,D,A])
+        #car_path = LineString([start_point,next_point])
+        v_distance = 15 # in further work udapte this
+        for v in vehicles:
+            v_start_point = v.get_position()
+            v_orientation = v.get_orientation()*math.pi/180
+            v_next_point = compute_point_along_direction(v_start_point,v_orientation,v_distance)
+            v_path = LineString([v_start_point,v_next_point])
+            intersected = v_path.intersects(car_path)
+            if intersected:
+                return intersected,closest_index
+        start_point = next_point
+
+    return intersected,index

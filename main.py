@@ -50,10 +50,10 @@ USE_CAMERA = True
 ###############################################################################
 PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 1000     # total number of pedestrians to spawn
-NUM_VEHICLES           = 1        # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 2      # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 1      # seed for vehicle spawn randomizer
+NUM_PEDESTRIANS        = 10     # total number of pedestrians to spawn
+NUM_VEHICLES           = 551        # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
+SEED_VEHICLES          = 1     # seed for vehicle spawn randomizer
 ###############################################################################
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -996,7 +996,9 @@ def exec_waypoint_nav_demo(args, host, port):
                 print(f"[EGO_YAW]: {round(current_yaw*180/math.pi, 2)} deg", end='\t')
                 print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")
 
-                print(f"[PEDESTRIAN_DETECTED]: {'Yes' if bp._pedestrian_detected else 'No'}")
+                print(f"[PEDESTRIAN_COLLISION_PREDICTED]: {'Yes' if bp._pedestrian_detected else 'No'}")
+                print(f"[VEHICLE_COLLISION_PREDICTED]: {'Yes' if bp._car_collision_predicted else 'No'}")
+
                 # print(f"[PED_POS]: (XXX.XX, XXX.XX)", end='\t')
                 # print(f"[PED_YAW]: X.XX deg", end='\t')
                 # print(f"[PED_SPEED]: X.XX m/s")

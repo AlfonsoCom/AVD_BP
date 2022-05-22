@@ -1,12 +1,38 @@
-import matplotlib.pyplot as plt
 import numpy as np
-points = [[321.2112439926337, 206.50232399398996], [321.4720334853697, 206.7357524333588], [321.7328229781057, 206.96918087272766], [322.0329452544548, 206.6338800995251], [322.3330675308038, 206.29857932632254], [322.0722780380678, 206.0651508869537], [321.8114885453318, 205.83172244758484], [321.5113662689827, 206.1670232207874]]  
-#takes only verteces of pedestrains bb
-points = points[0:-1:2]
+from math import cos,sin 
+def to_rot(r):
+    Rx = np.mat([[ 1,         0,           0],
+                 [ 0, cos(r[0]), -sin(r[0]) ],
+                 [ 0, sin(r[0]),  cos(r[0]) ]])
 
-points = np.array(points)
-# points = points[np.array([x for x in range(0,len(points),2)])]
-for i,point in enumerate(points):
-    plt.scatter(point[0],point[1],label=str(i))
-plt.legend()
-plt.show()
+    Ry = np.mat([[ cos(r[1]), 0,  sin(r[1]) ],
+                 [ 0,         1,          0 ],
+                 [-sin(r[1]), 0,  cos(r[1]) ]])
+
+    Rz = np.mat([[ cos(r[2]), -sin(r[2]), 0 ],
+                 [ sin(r[2]),  cos(r[2]), 0 ],
+                 [         0,          0, 1 ]])
+
+    return Rz*Ry*Rx
+
+def rotate_x(angle):
+    R = np.mat([[ 1,         0,           0],
+                 [ 0, cos(angle), -sin(angle) ],
+                 [ 0, sin(angle),  cos(angle) ]])
+    return R
+
+def rotate_y(angle):
+    R = np.mat([[ cos(angle), 0,  sin(angle) ],
+                 [ 0,         1,          0 ],
+                 [-sin(angle), 0,  cos(angle) ]])
+    return R
+
+def rotate_z(angle):
+    R = np.mat([[ cos(angle), -sin(angle), 0 ],
+                 [ sin(angle),  cos(angle), 0 ],
+                 [         0,          0, 1 ]])
+    return R
+
+
+r_t = np.dot(rotate_z(-90*np.pi/180),rotate_x(-90*np.pi/180))
+print(np.round(r_t,2))

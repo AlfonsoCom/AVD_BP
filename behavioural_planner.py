@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from multiprocessing.connection import wait
 import numpy as np
 import math
 from shapely.geometry import Point, Polygon
@@ -47,7 +48,8 @@ class BehaviouralPlanner:
         self._vehicles                      = vehicles
         self._lead_vehicle                  = None
         self._vehicles_dict                 = None
-        self._pedestrian_detected           = False    
+        self._pedestrian_detected           = False  
+        self._car_collision_predicted       = False  
 
 
 
@@ -159,9 +161,21 @@ class BehaviouralPlanner:
                     self._follow_lead_vehicle = False
 
            
-
+            goal_index_car = goal_index
             goal_index_pd = goal_index
             goal_index_tl = goal_index
+
+            car_collision_predicted, car_stop = check_vehicles(ego_state[:2],ego_state[2],self._vehicles,self._lookahead,
+            looksideways_left=3,looksideways_right=3,waypoints=waypoints,closest_index=closest_index,goal_index=goal_index,
+            lead_vehicle=self._follow_lead_vehicle)
+
+            self._car_collision_predicted = car_collision_predicted
+            if car_collision_predicted:
+                if closed_loop_speed > STOP_THRESHOLD:
+                    goal_index_car = car_stop
+                wp_speed = 0
+                self._state = DECELERATE_TO_STOP
+
 
             ### check pedestrian intersection
             # pedestrian_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
@@ -174,7 +188,7 @@ class BehaviouralPlanner:
             self._pedestrian_detected = pedestrian_detected
             if pedestrian_detected:
                 if closed_loop_speed > STOP_THRESHOLD:
-                    goal_index = car_stop
+                    goal_index_pd = car_stop
                     #goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 wp_speed = 0
                 self._state = DECELERATE_TO_STOP
@@ -214,26 +228,35 @@ class BehaviouralPlanner:
                 return
 
             # closest_len, closest_index = get_closest_index(waypoints, ego_state)
-            goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-
+            #goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
+            goal_index = self._goal_index
             # if new goal_index is greater than last goal_index we don't update the current goal_index
             # because in this state the aim is to decelerate and stop the car.
             # we update the current goal index if the new goal index is smaller or  the latest goal_index
             # is smaller than the actual closest_index. The last condition means that the car passed the latest goal_index and so
             # the new stop goal index will be the closest_index.    
-            if goal_index>self._goal_index:
-                goal_index = self._goal_index
+            # if goal_index>self._goal_index:
+            #     goal_index = self._goal_index
+
+            if closest_index>self._goal_index:
+                closest_index = self._goal_index
             
 
             # we chose the goal index to stop according the fact that         
             goal_index_pd = goal_index
             goal_index_tl = goal_index
             goal_index_car = goal_index 
+
             
-            vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],self._vehicles,self._lookahead )
-            if vehicle != None:
-                car_stop = vehicle.get_position()
-                goal_index_car  = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
+            
+            car_collision_predicted, car_stop = check_vehicles(ego_state[:2],ego_state[2],self._vehicles,self._lookahead,
+            looksideways_left=3,looksideways_right=3,waypoints=waypoints,closest_index=closest_index,goal_index=goal_index,
+            lead_vehicle=False)
+
+            self._car_collision_predicted = car_collision_predicted
+
+            if car_collision_predicted:
+                goal_index_car = car_stop
 
 
             # pedestrian_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=self._lookahead,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
@@ -245,7 +268,7 @@ class BehaviouralPlanner:
 
             
             if pedestrian_detected:
-                goal_index = car_stop
+                goal_index_pd = car_stop
                 #goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 
             traffic_light_on_path = len(self._current_traffic_light)>0
@@ -261,7 +284,7 @@ class BehaviouralPlanner:
 
             # this condition is when the car has previusly detected a pedestrain on the road
             # and than this pedestrian goes out of road. 
-            if not pedestrian_detected and not traffic_light_on_path:
+            if not pedestrian_detected and not traffic_light_on_path and not car_collision_predicted:
                     self._state = FOLLOW_LANE
                     return
 
@@ -276,11 +299,21 @@ class BehaviouralPlanner:
         elif self._state == STAY_STOPPED:
             
             # closest_len, closest_index = get_closest_index(waypoints, ego_state)
+            if closest_index>self._goal_index:
+                closest_index = self._goal_index
+
+            car_collision_predicted, _ = check_vehicles(ego_state[:2],ego_state[2],self._vehicles,self._lookahead,
+            looksideways_left=3,looksideways_right=3,waypoints=waypoints,closest_index=closest_index,goal_index=self._goal_index,
+            lead_vehicle=False)
+
+            self._car_collision_predicted = car_collision_predicted
+
+            
 
             # cehck if there are some pedetrian along car trajectory
-            pedestrian_detected, car_stop = check_pedestrians2(ego_state[:2],ego_state[2],self._pedestrians,
+            pedestrian_detected, _ = check_pedestrians2(ego_state[:2],ego_state[2],self._pedestrians,
             lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left,
-                waypoints=waypoints,closest_index=closest_index,goal_index=closest_index)
+                waypoints=waypoints,closest_index=closest_index,goal_index=self._goal_index)
 
             
             self._pedestrian_detected = pedestrian_detected
@@ -293,7 +326,7 @@ class BehaviouralPlanner:
                 traffic_light_stop = self._tl_dict[id] != GREEN
 
             # if no pedetrain and red traffic light are along car trajectory go to FOLLOW_LANE
-            if not pedestrian_detected and not traffic_light_stop:
+            if not pedestrian_detected and not traffic_light_stop and not car_collision_predicted:
                 self._state = FOLLOW_LANE
                 # reset current traffic light status
                 self._current_traffic_light = []

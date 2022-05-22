@@ -126,7 +126,7 @@ def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,
         norm = np.linalg.norm(v_diff)
         orientation = math.atan2(v_diff[1],v_diff[0])
         car_extent_y = 1.5
-        A,B,C,D = compute_bb_verteces(start_point,norm,orientation,car_extent_y)
+        A,B,C,D = compute_bb_verteces(start_point,norm,orientation,car_extent_y+CAR_LATERAL_MARGIN)
         car_path = Polygon([A,B,C,D,A])
         #car_path = LineString([start_point,next_point])
         pd_distance = 15 # in further work udapte this
@@ -136,7 +136,7 @@ def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,
             pd_path = LineString([pd_start_point,pd_next_point])
             intersected = pd_path.intersects(car_path)
             if intersected:
-                return intersected,index
+                return intersected,closest_index
         start_point = next_point
 
     return intersected,index

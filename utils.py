@@ -49,7 +49,7 @@ def compute_bb_verteces(p,a,p_orientation,b,b1=None):
 
         D-----------C
         |           |    
-        p           p1
+        p           p1  
         |           |
         |           |
         A-----------B
