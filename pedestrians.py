@@ -89,9 +89,22 @@ def check_pedestrian(ego_pos,ego_yaw,ego_speed,pedestrians,lookahead,looksideway
 
 
 def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index):
-    
+    """
+        Predict the presence of a pedestrian on the ego trajectory. If a pedestrian collision is estimated returns 
+        true flag and the new goal index to stop.
+        params:
+            ego_pos list([x,y]):  car coordinates
+            ego_yaw float : car orientation
+            pedestrians np.array(): array of vehicles
+            lookahead float:  max  look a head distance 
+            looksideways_right float: max look right distance 
+            looksideways_left float: max looksideways left distance
+            waypoints np.array(): point that car should follow
+            closest_index int:  the nearest waypoint index
+            goal_index int: the goal waypoint index
+    """
     if len(pedestrians)==0:
-        return False,[]
+        return False,goal_index
 
     # Step 1 filter pedetrians in bb
     A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
@@ -100,7 +113,6 @@ def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,
     # numpy array pedestrians
     pds  = pedestrians
     pds_boolean = pds == None
-    flag = False
     for i,pd in enumerate(pds):
         # get pedestrian bb
         pedestrian_bb_verteces = pd.get_bounding_box()
@@ -108,7 +120,6 @@ def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,
             
             vertex = Point(bb_vertex)
             if bb.contains(vertex):
-                flag = True
                 pds_boolean[i] = True
                 break
         

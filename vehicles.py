@@ -6,6 +6,16 @@ from shapely.geometry import Point, Polygon, LineString
 
 
 def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.5,looksideways_left=1.5):
+    """
+        Detects the presence of a vehicle to follow on the ego trajectory. If a vehicle is detected returns it
+        params:
+            ego_pos list([x,y]):  car coordinates
+            ego_yaw float : car orientation
+            vehicles np.array(): array of vehicles
+            lookahead float:  max  look a head distance 
+            looksideways_right float: max look right distance 
+            looksideways_left float: max looksideways left distance
+    """
     if len(vehicles)==0:
         return None
 
@@ -14,14 +24,12 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.
     bb = Polygon([A,B,C,D,A])
 
     vehicles_boolean = vehicles == None
-    flag = False
     for i,vehicle in enumerate(vehicles):
         vehicle_bb_verteces = vehicle.get_bounding_box()
 
         for bb_vertex in vehicle_bb_verteces:
             vertex = Point(bb_vertex)
             if bb.contains(vertex):
-                flag = True
                 vehicles_boolean[i] = True
                 break
     
@@ -64,9 +72,23 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.
 
 
 def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index,lead_vehicle):
-    
+    """
+        Detects the presence of a vehicle on the ego trajectory. If a vehicle collision is estimated returns 
+        true flag and the new goal index to stop.
+        params:
+            ego_pos list([x,y]):  car coordinates
+            ego_yaw float : car orientation
+            vehicles np.array(): array of vehicles
+            lookahead float:  max  look a head distance 
+            looksideways_right float: max look right distance 
+            looksideways_left float: max looksideways left distance
+            waypoints np.array(): point that car should follow
+            closest_index int:  the nearest waypoint index
+            goal_index int: the goal waypoint index
+            lead_vehicle Boolean: presence of a vehicle to follow 
+    """
     if len(vehicles)==0:
-        return False,[]
+        return False,goal_index
 
     # Step 1 filter pedetrians in bb
     A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
@@ -75,21 +97,19 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
     # numpy array pedestrians
     
     vehicles_boolean = vehicles == None
-    flag = False
     for i,v in enumerate(vehicles):
         vehicles_bb_verteces = v.get_bounding_box()
         for bb_vertex in vehicles_bb_verteces:
             
             vertex = Point(bb_vertex)
             if bb.contains(vertex):
-                flag = True
                 vehicles_boolean[i] = True
                 break
         
     # considered only pedestrians inside bounding box
     vehicles = vehicles[vehicles_boolean]
 
-    # STEP 2 in the case where no lead vehicle are in the scene we check only for car in direction 
+    # STEP 2 in the case where a lead vehicle is in the scene we check only for cars in direction 
     # discording to us (ONLY in FOLLOW_LANE STATE) 
 
     if lead_vehicle: 
@@ -109,9 +129,11 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
     start_point = ego_pos
     intersected = False
     index = closest_index
+
     # plus one so in this way also goal index is used to check intersection
     for index in range(closest_index,goal_index+1):
         next_point = waypoints[index][:2]
+
         v_diff = np.subtract(next_point,start_point)
         norm = np.linalg.norm(v_diff)
         orientation = math.atan2(v_diff[1],v_diff[0])

@@ -1,16 +1,15 @@
-import numpy as np
 import math
-
 
 def compute_bb_verteces_parametrics(p,a,p_orientation,b,b1 = None,sign_x1=1,sign_y1=1,sign_x2=1,sign_y2=1):
     """
         Computes other three bounding box verteces (p1,p2,p3) useful to detect traffic
         light. 
         params:
-        p is a bounding box vertex that coincides with car center.
-        a lenght of longest bounding box side
-        b lenght of shortest bounding box side
-        p_orientation car orientation 
+        p list([x,y]): is a point on segment AD.
+        a float: lenght of longest bounding box side (segment DC or AB)
+        b float: lenght of segment pA (or p1B)
+        b1 float: lenght of segment pD (or p1C) (if None it will be eqaul to b)
+        p_orientation float: orientation in radians (-pi to pi) needed to define segment AB from point p
         sign_x*, sign_y* can be -1 or 1 and are used to compute points according your specific 
                          coordinate reference system 
     """
@@ -54,12 +53,12 @@ def compute_bb_verteces(p,a,p_orientation,b,b1=None):
         |           |
         A-----------B
 
-    light params:
-        p is a point on segment AD.
-        a lenght of longest bounding box side (segment DC or AB)
-        b lenght of segment pA (or p1B)
-        b1 lenght of segment pD (or p1C)
-        p_orientation car orientation 
+    params:
+        p list([x,y]): is a point on segment AD.
+        a float: lenght of longest bounding box side (segment DC or AB)
+        p_orientation float: orientation in radians (-pi to pi) needed to define segment AB from point p
+        b float: lenght of segment pA (or p1B)
+        b1 float: lenght of segment pD (or p1C) (if None it will be eqaul to b)
     """
 
     if p_orientation >= 0 and p_orientation <= math.pi/2:
@@ -80,6 +79,16 @@ def compute_bb_verteces(p,a,p_orientation,b,b1=None):
 
 
 def compute_point_along_direction_parametric(p,p_orientation,a,sign_x=1,sign_y=1):
+    """
+    Fixed a point and orientation derives an other point along a segment that starts from point p with lenght
+    a and orientation p_orientation
+    params:     
+        p list([x,y]): is a point on segment AD.
+        a float: distance from point p to new point (segment DC or AB)
+        p_orientation float: orientation in radians (-pi to pi) needed to define position of new points respect to point p
+        sign_x, sign_y can be -1 or 1 and are used to compute points according your specific 
+                         coordinate reference system 
+    """
     x_temp = a * math.sin(p_orientation) 
     y_temp = a * math.cos(p_orientation) 
     return [p[0] + sign_x * x_temp, p[1] + sign_y * y_temp]
@@ -87,6 +96,12 @@ def compute_point_along_direction_parametric(p,p_orientation,a,sign_x=1,sign_y=1
 
 def compute_point_along_direction(start_point,direction,distance):
     """
+    Fixed a start point and orientation derives an other point along a segment that starts from point p with lenght
+    equal to distance and orientation eqaul to direction
+    params:     
+        p list([x,y]): is a point on segment AD.
+        distance float: distance from point start_point to new point (segment DC or AB)
+        direction float: orientation in radians (-pi to pi) needed to define position of new points respect to point p    
     Es:
                                  distance
                     new_point <----------------- start_point

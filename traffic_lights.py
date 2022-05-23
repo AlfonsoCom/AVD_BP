@@ -18,7 +18,6 @@ def check_traffic_light(ego_pos,ego_yaw,traffic_lights,lookahead,looksideways_ri
     return:
         int: if detected return traffic light info as list, else empty list
     """
-    return [] 
     #STEP 1 check traffic_light is in bounding box
     # compute bounding box starting from car bonnet
     center_point = compute_point_along_direction(ego_pos,ego_yaw,distance=2)
