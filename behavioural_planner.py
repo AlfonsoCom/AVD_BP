@@ -303,8 +303,7 @@ class BehaviouralPlanner:
                 closest_index = self._goal_index
 
             car_collision_predicted, _ = check_vehicles(ego_state[:2],ego_state[2],self._vehicles,self._lookahead,
-            looksideways_left=3,looksideways_right=3,waypoints=waypoints,closest_index=closest_index,goal_index=self._goal_index,
-            lead_vehicle=False)
+            looksideways_left=3,looksideways_right=3,waypoints=waypoints,closest_index=closest_index,goal_index=self._goal_index)
 
             self._car_collision_predicted = car_collision_predicted
 

@@ -71,7 +71,7 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.
 
 
 
-def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index,lead_vehicle):
+def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index,lead_vehicle=True):
     """
         Detects the presence of a vehicle on the ego trajectory. If a vehicle collision is estimated returns 
         true flag and the new goal index to stop.
@@ -109,8 +109,9 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
     # considered only pedestrians inside bounding box
     vehicles = vehicles[vehicles_boolean]
 
-    # STEP 2 in the case where a lead vehicle is in the scene we check only for cars in direction 
+    # STEP 2 in the case there is no lead vehicle is in the scene we check only for cars in direction 
     # discording to us (ONLY in FOLLOW_LANE STATE) 
+    # because if we detect a person and no lead car is just detected 
 
     if lead_vehicle: 
 
