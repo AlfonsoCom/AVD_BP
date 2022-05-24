@@ -76,8 +76,8 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
         Detects the presence of a vehicle on the ego trajectory. If a vehicle collision is estimated returns 
         true flag and the new goal index to stop.
         params:
-            ego_pos list([x,y]):  car coordinates
-            ego_yaw float : car orientation
+            ego_pos list([x,y]):  ego car coordinates
+            ego_yaw float : ego car orientation
             vehicles np.array(): array of vehicles
             lookahead float:  max  look a head distance 
             looksideways_right float: max look right distance 
@@ -110,8 +110,7 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
     vehicles = vehicles[vehicles_boolean]
 
     # STEP 2 in the case there is no lead vehicle is in the scene we check only for cars in direction 
-    # discording to us (ONLY in FOLLOW_LANE STATE) 
-    # because if we detect a person and no lead car is just detected 
+    # discording to us  
 
     if lead_vehicle: 
 
