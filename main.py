@@ -140,6 +140,18 @@ camera_parameters['width'] = 200 if not VIEWING_CAMERA else 500
 camera_parameters['height'] = 200 if not VIEWING_CAMERA else 500
 camera_parameters['fov'] = 90
 
+camera_parameters_view = {}
+camera_parameters_view['x'] = -5.0
+camera_parameters_view['y'] = 0.0
+camera_parameters_view['z'] = 2.5
+camera_parameters_view['pitch'] = -15.0
+camera_parameters_view['roll'] = 0.0
+camera_parameters_view['yaw'] = 0.0
+camera_parameters_view['width'] = 500 
+camera_parameters_view['height'] = 500
+camera_parameters_view['fov'] = 90
+
+
 def rotate_x(angle):
     R = np.mat([[ 1,         0,           0],
                  [ 0, cos(angle), -sin(angle) ],
@@ -248,11 +260,32 @@ def make_carla_settings(args):
     camera2.set_position(cam_x_pos, cam_y_pos, cam_height)
     camera2.set_rotation(camera_pitch, camera_roll, camera_yaw)
 
+    settings.add_sensor(camera0)
     settings.add_sensor(camera1)
     settings.add_sensor(camera2)
     
     if USE_CAMERA:
-        settings.add_sensor(camera0)
+        # Common cameras settings
+        cam_height = camera_parameters_view['z'] 
+        cam_x_pos = camera_parameters_view['x']
+        cam_y_pos = camera_parameters_view['y']
+        camera_pitch = camera_parameters_view['pitch']
+        camera_roll = camera_parameters_view['roll']
+        camera_yaw = camera_parameters_view['yaw']
+        camera_width = camera_parameters_view['width']
+        camera_height = camera_parameters_view['height']
+        camera_fov = camera_parameters_view['fov']
+
+
+        # Declare here your sensors
+        camera3 = Camera("CameraRGBView")
+        camera3.set_image_size(camera_width, camera_height)
+        camera3.set(FOV=camera_fov)
+        camera3.set_position(cam_x_pos, cam_y_pos, cam_height)
+        camera3.set_rotation(camera_pitch, camera_roll, camera_yaw)
+
+    
+        settings.add_sensor(camera3)
 
     return settings
 
@@ -874,8 +907,6 @@ def exec_waypoint_nav_demo(args, host, port):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
 
-            
-            
             # UPDATE HERE the obstacles list
             obstacles = []
            
@@ -913,6 +944,46 @@ def exec_waypoint_nav_demo(args, host, port):
 
             if frame % (LP_FREQUENCY_DIVISOR) == 0:
             # update traffic_lights status
+                ###################################
+                # GET BGR
+
+                camera_data = sensor_data.get('CameraRGB', None)
+                if camera_data is not None:
+                    camera_data = to_bgra_array(camera_data)
+                    camera_data = np.copy(camera_data)
+
+
+                ###################################
+                # DETECTOR
+
+                detector = None
+
+                ###################################
+                # GET BBs
+
+                # bbs vehicle and pedestrian
+
+
+                ###################################
+                # MARK PEDESTRIAN BB ON SIDEWAYS
+
+                # only pedestrian bb
+
+                # found point in the middle of bb vertex like X
+                #   x1--------x2
+                #    |        | 
+                #   x3---X----x4
+                # 
+                # if X is on sidewalk (or x3 or x4) mark this pedestrian as on sidewalk
+
+                
+                
+
+                ###################################
+                # USING DEPTH CAMERA GET PEDESTRIAN BB AND VEHICLE BB IN WORLD COORDINATES FRAME
+
+                # from bbs get center point and use that to associate 
+
                 
                 pedestrians = []
                 vehicles = []
@@ -967,7 +1038,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 bp.set_vehicles(vehicles)
                 bp.set_vehicles_dict(vehicles_dict)
 
-            camera_data = sensor_data.get('CameraRGB', None)
+            camera_data = sensor_data.get('CameraRGBView', None)
             if camera_data is not None:
                 camera_data = to_bgra_array(camera_data)
                 cv2.imshow("CameraRGB", camera_data)
