@@ -236,6 +236,21 @@ def make_carla_settings(args):
     camera0.set_position(cam_x_pos, cam_y_pos, cam_height)
     camera0.set_rotation(camera_pitch, camera_roll, camera_yaw)
 
+    camera1 = Camera("CameraSemSeg", PostProcessing="SemanticSegmentation")
+    camera1.set_image_size(camera_width, camera_height)
+    camera1.set(FOV=camera_fov)
+    camera1.set_position(cam_x_pos, cam_y_pos, cam_height)
+    camera1.set_rotation(camera_pitch, camera_roll, camera_yaw)
+
+    camera2 = Camera("CameraDepth", PostProcessing="Depth")
+    camera2.set_image_size(camera_width, camera_height)
+    camera2.set(FOV=camera_fov)
+    camera2.set_position(cam_x_pos, cam_y_pos, cam_height)
+    camera2.set_rotation(camera_pitch, camera_roll, camera_yaw)
+
+    settings.add_sensor(camera1)
+    settings.add_sensor(camera2)
+    
     if USE_CAMERA:
         settings.add_sensor(camera0)
 
