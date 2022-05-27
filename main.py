@@ -35,6 +35,8 @@ from carla.sensor import Camera
 from carla.image_converter import labels_to_array, depth_to_array, to_bgra_array
 from carla.planner.city_track import CityTrack
 
+from AVD_BP.detector.carla_yolov3_model.OD import load_model
+
 
 SERVER_HOST = "193.205.163.183"
 SERVER_PORT = 6018
@@ -65,7 +67,7 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # consistently
 
 DESIRED_SPEED = 5.0
-
+net = load_model()
 WINDOWS_OS = os.name == 'nt'
 
 WEATHERID = {
@@ -903,6 +905,13 @@ def exec_waypoint_nav_demo(args, host, port):
 
 
         vehicles_dict = {}
+
+    
+        ###################################
+        # DETECTOR
+
+        detector = None
+
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -951,12 +960,6 @@ def exec_waypoint_nav_demo(args, host, port):
                 if camera_data is not None:
                     camera_data = to_bgra_array(camera_data)
                     camera_data = np.copy(camera_data)
-
-
-                ###################################
-                # DETECTOR
-
-                detector = None
 
                 ###################################
                 # GET BBs
