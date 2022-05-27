@@ -1,5 +1,12 @@
 __pycache__/
 .mypy_cache/
+.controller_output/*
 AVD_course_codebase.zip
 options.cfg
-controller_output/
+
+**/*.weights
+**/*.mov
+
+
+.carla_object_detector/carla_yolov3_model/yolov3.weights
+.carla_object_detector/carla_yolov3_model/rec.mov
