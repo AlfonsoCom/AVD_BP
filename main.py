@@ -20,6 +20,8 @@ import behavioural_planner
 import cv2
 from math import sin, cos, pi, tan, sqrt
 from vehicle import Agent
+from sidewalk import point_in_sidewalks
+from converter import Converter
 
 import os
 
@@ -35,8 +37,8 @@ from carla.sensor import Camera
 from carla.image_converter import labels_to_array, depth_to_array, to_bgra_array
 from carla.planner.city_track import CityTrack
 
-from AVD_BP.detector.carla_yolov3_model.OD import load_model
-
+from AVD_BP.detector.carla_yolov3_model.OD import load_model,predict,postprocess
+from AVD_BP.detector.carla_yolov3_model.config import VEHICLE_TAG,PERSON_TAG
 
 SERVER_HOST = "193.205.163.183"
 SERVER_PORT = 6018
@@ -67,7 +69,7 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # consistently
 
 DESIRED_SPEED = 5.0
-net = load_model()
+
 WINDOWS_OS = os.name == 'nt'
 
 WEATHERID = {
@@ -132,14 +134,14 @@ AGENTS_CHECK_RADIUS = 30
 
 # Camera parameters
 camera_parameters = {}
-camera_parameters['x'] = 1.8 if not VIEWING_CAMERA else -5.0
+camera_parameters['x'] = 1.8 
 camera_parameters['y'] = 0.0
-camera_parameters['z'] = 1.3 if not VIEWING_CAMERA else 2.5
-camera_parameters['pitch'] = 0.0 if not VIEWING_CAMERA else -15.0
+camera_parameters['z'] = 1.3
+camera_parameters['pitch'] = 0.0 
 camera_parameters['roll'] = 0.0
 camera_parameters['yaw'] = 0.0
-camera_parameters['width'] = 200 if not VIEWING_CAMERA else 500 
-camera_parameters['height'] = 200 if not VIEWING_CAMERA else 500
+camera_parameters['width'] = 200 
+camera_parameters['height'] = 200 
 camera_parameters['fov'] = 90
 
 camera_parameters_view = {}
@@ -153,6 +155,7 @@ camera_parameters_view['width'] = 500
 camera_parameters_view['height'] = 500
 camera_parameters_view['fov'] = 90
 
+converter = Converter(camera_parameters)
 
 def rotate_x(angle):
     R = np.mat([[ 1,         0,           0],
@@ -910,7 +913,7 @@ def exec_waypoint_nav_demo(args, host, port):
         ###################################
         # DETECTOR
 
-        detector = None
+        net = load_model()
 
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
@@ -958,18 +961,33 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 camera_data = sensor_data.get('CameraRGB', None)
                 if camera_data is not None:
-                    camera_data = to_bgra_array(camera_data)
+                    # to_bgra_array returns an image with 4 channels with last channel all zeros
+                    camera_data = to_bgra_array(camera_data)[:,:,:3]
                     camera_data = np.copy(camera_data)
 
                 ###################################
                 # GET BBs
 
-                # bbs vehicle and pedestrian
+                bb = predict(net,camera_data)
+                camera_data, bb_dict= postprocess(camera_data,bb)
+                cv2.imshow("Detection box",camera_data)
+                cv2.waitKey(10)
+                
+                
+                #bbs vehicle and pedestrian
+                ## bb_p and bb_v are lists like [[(x,y),width,height]]
+                # NOTE to access to a specific pixel from bb x,y -> camera_data[y,x] 
+                #list of pedestrians bounding boxis
+                bb_p = bb_dict[PERSON_TAG]
+                
+                # list of bounding boxis
+
+                bb_v = bb_dict[VEHICLE_TAG]
 
 
                 ###################################
                 # MARK PEDESTRIAN BB ON SIDEWAYS
-
+                
                 # only pedestrian bb
 
                 # found point in the middle of bb vertex like X
@@ -978,16 +996,28 @@ def exec_waypoint_nav_demo(args, host, port):
                 #   x3---X----x4
                 # 
                 # if X is on sidewalk (or x3 or x4) mark this pedestrian as on sidewalk
-
+                # in this section for each pedestrian bb check if point X is on sidewalk
+                
+                # USE FUNCTION : point_in_sidewalks(semSeg_data, point) NOTE: point must be provided as (y,x)
                 
                 
 
                 ###################################
+                # FOR EACH BB WE CAN CHOOSE X POINT DESCIBED IN PREVIUS SECTION TO GET VEHICLES POSITION
+                # IN 3D WORLD COORDINATE FRAME
                 # USING DEPTH CAMERA GET PEDESTRIAN BB AND VEHICLE BB IN WORLD COORDINATES FRAME
 
-                # from bbs get center point and use that to associate 
+
+                # USE this to convert a pixel in 3D  pixel should be [x,y,1] pixel_depth = depth_data[y1][x1]
+                #converter.convert_to_3D(pixel,pixel_depth,current_x,current_y,current_lead_car_y)
+            
 
                 
+
+                ###############################################
+                
+                # BELOW CARLA PERFECT DATA
+
                 pedestrians = []
                 vehicles = []
                 for agent in measurement_data.non_player_agents:
@@ -1031,6 +1061,11 @@ def exec_waypoint_nav_demo(args, host, port):
                             vehicles.append(vehicle)
                             vehicles_dict[id] = vehicle 
 
+
+                #########################################
+                # here make data association (remember to valuate it only on x and y)
+                #########################################
+
                 
                 pedestrians = np.array(pedestrians,dtype=object)
                 vehicles = np.array(vehicles)
@@ -1043,7 +1078,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
             camera_data = sensor_data.get('CameraRGBView', None)
             if camera_data is not None:
-                camera_data = to_bgra_array(camera_data)
+                camera_data = to_bgra_array(camera_data)[:,:,:3]
                 cv2.imshow("CameraRGB", camera_data)
                 cv2.waitKey(10)
                 

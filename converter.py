@@ -72,8 +72,22 @@ class Converter():
             world_frame_point[:3] = camera_frame_point
             world_frame_point[-1] = 1
 
-            x   = ego_x + self._camera_params["x"]
-            y   = ego_y + self._camera_params["y"]
+            sign_x = 1
+            sign_y = 1
+
+            # check if that's improve performance or not
+            if ego_yaw>= 0 and ego_yaw<=pi/2:
+                pass
+            elif ego_yaw>pi/2 and ego_yaw<=pi:
+                sign_x = -1
+            elif ego_yaw> -pi and ego_yaw<= -pi/2:
+                sign_x = -1
+                sign_y = -1
+            elif ego_yaw> -pi/2 and ego_yaw < 0:
+                sign_y = -1
+
+            x   = ego_x + sign_x*self._camera_params["x"]
+            y   = ego_y + sign_y*self._camera_params["y"]
             z   = self._camera_params["z"]
             yaw = ego_yaw
             self._set_extrinsic_matrix(x,y,z,yaw)
