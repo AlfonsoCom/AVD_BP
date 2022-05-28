@@ -3,3 +3,4 @@ __pycache__/
 AVD_course_codebase.zip
 options.cfg
 controller_output/
+*.pth
