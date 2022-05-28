@@ -990,7 +990,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 
                 # only pedestrian bb
 
-                # found point in the middle of bb vertex like X
+                # found point in the middle of bb vertex like X, x1 refer to (x,y) from one bb in bb_p
                 #   x1--------x2
                 #    |        | 
                 #   x3---X----x4
@@ -999,6 +999,21 @@ def exec_waypoint_nav_demo(args, host, port):
                 # in this section for each pedestrian bb check if point X is on sidewalk
                 
                 # USE FUNCTION : point_in_sidewalks(semSeg_data, point) NOTE: point must be provided as (y,x)
+                count=0
+                sidewalk= {}
+                for bb in bb_p:
+                    x_middle_point = bb[count][0][0]+ bb[count][1]//2
+                    y_middle_point = bb[count][0][1] + bb[count][2] 
+                    middle_point = (y_middle_point, x_middle_point) #(y,x) format to pass to function
+                    on_sidewalk = point_in_sidewalks(semSeg_data, middle_point)
+                    if on_sidewalk:
+                        sidewalk[count] = on_sidewalk
+
+                    count+=1
+                    
+
+
+
                 
                 
 
@@ -1064,6 +1079,10 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 #########################################
                 # here make data association (remember to valuate it only on x and y)
+                #output-> np array di pedoni
+
+
+
                 #########################################
 
                 
