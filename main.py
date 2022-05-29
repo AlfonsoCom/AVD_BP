@@ -1039,7 +1039,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 for vehicle in bb_v:
                     middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
                     pixel = [middle_point[0], middle_point[1], 1]
-                    pixel_depth = depth_data[middle_point[1], middle_point[0]]
+                    pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
                     world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_lead_car_y)
                     world_frame_vehicles.append(world_frame_point)
 
@@ -1047,7 +1047,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 for pedestrian in bb_p:
                     middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
                     pixel = [middle_point[0], middle_point[1], 1]
-                    pixel_depth = depth_data[middle_point[1], middle_point[0]]
+                    pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
                     world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_lead_car_y)
                     world_frame_pedestrians.append(world_frame_point)
 
