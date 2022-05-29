@@ -123,3 +123,11 @@ def compute_point_along_direction(start_point,direction,distance):
     elif p_orientation > - math.pi/2 and p_orientation < 0:
         p_orientation = math.pi/2 - abs(p_orientation)
         return compute_point_along_direction_parametric(start_point,p_orientation,distance,sign_y=-1)
+
+
+def compute_middle_point(x, y, width, height):
+    x_middle_point= x + width//2
+    y_middle_point= y + height
+    middle_point = (x_middle_point, y_middle_point)
+    
+    return middle_point
