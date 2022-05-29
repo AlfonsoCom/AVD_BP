@@ -19,6 +19,7 @@ import local_planner
 import behavioural_planner
 import cv2
 from math import sin, cos, pi, tan, sqrt
+from utils import compute_middle_point
 from vehicle import Agent
 from sidewalk import point_in_sidewalks
 from converter import Converter
@@ -999,15 +1000,18 @@ def exec_waypoint_nav_demo(args, host, port):
                 # in this section for each pedestrian bb check if point X is on sidewalk
                 
                 # USE FUNCTION : point_in_sidewalks(semSeg_data, point) NOTE: point must be provided as (y,x)
+                
+                #output segmentation
+                seg_data = sensor_data.get('CameraSemSeg', None)
+                if seg_data is not None:
+                    seg_data = seg_data.data
+                
                 count=0
-                sidewalk= {}
+                sidewalk= {} #contains only the X on sidewalk, True if X is on sidewalk otherwise False
                 for bb in bb_p:
-                    x_middle_point = bb[count][0][0]+ bb[count][1]//2
-                    y_middle_point = bb[count][0][1] + bb[count][2] 
-                    middle_point = (y_middle_point, x_middle_point) #(y,x) format to pass to function
-                    on_sidewalk = point_in_sidewalks(semSeg_data, middle_point)
-                    if on_sidewalk:
-                        sidewalk[count] = on_sidewalk
+                    middle_point = compute_middle_point(bb[0][0], bb[0][1], bb[1], bb[2])
+                    on_sidewalk = point_in_sidewalks(seg_data, middle_point)
+                    sidewalk[count] = on_sidewalk
 
                     count+=1
                     
@@ -1025,6 +1029,35 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 # USE this to convert a pixel in 3D  pixel should be [x,y,1] pixel_depth = depth_data[y1][x1]
                 #converter.convert_to_3D(pixel,pixel_depth,current_x,current_y,current_lead_car_y)
+
+                #depth camera
+                depth_data = sensor_data.get('CameraDepth', None)
+                if depth_data is not None:
+                    depth_data = depth_data.data
+
+                world_frame_vehicles = [] #list of tuples of converted pixel in the world
+                for vehicle in bb_v:
+                    middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
+                    pixel = [middle_point[0], middle_point[1], 1]
+                    pixel_depth = depth_data[middle_point[1], middle_point[0]]
+                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_lead_car_y)
+                    world_frame_vehicles.append(world_frame_point)
+
+                world_frame_pedestrians = [] #list of tuples of converted pixel in the world
+                for pedestrian in bb_p:
+                    middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
+                    pixel = [middle_point[0], middle_point[1], 1]
+                    pixel_depth = depth_data[middle_point[1], middle_point[0]]
+                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_lead_car_y)
+                    world_frame_pedestrians.append(world_frame_point)
+
+                
+
+                
+
+
+
+
             
 
                 
@@ -1079,7 +1112,8 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 #########################################
                 # here make data association (remember to valuate it only on x and y)
-                #output-> np array di pedoni
+                # input-> world_frame_vehicles, world_frame_pedestrians, sidewalk
+                # output-> np array di pedoni
 
 
 
@@ -1100,6 +1134,10 @@ def exec_waypoint_nav_demo(args, host, port):
                 camera_data = to_bgra_array(camera_data)[:,:,:3]
                 cv2.imshow("CameraRGB", camera_data)
                 cv2.waitKey(10)
+
+ 
+
+
                 
             # Execute the behaviour and local planning in the current instance
             # Note that updating the local path during every controller update
