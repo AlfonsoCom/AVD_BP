@@ -1052,7 +1052,15 @@ def exec_waypoint_nav_demo(args, host, port):
                     world_frame_pedestrians.append(world_frame_point)
 
                 
-
+                # TESTING
+                print("[VEHICLES DETECTED FROM CAMERA]: ")
+                for v in world_frame_vehicles:
+                    print(v)
+                print("[PEDESTRIANS DETECTED FROM CAMERA]: ")
+                i = 0
+                for p in world_frame_pedestrians:
+                    print(f"{p}, sidewalk: {sidewalk[i]}")
+                    i += 1
                 
 
 
