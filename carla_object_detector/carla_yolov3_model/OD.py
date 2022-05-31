@@ -95,9 +95,7 @@ def postprocess(frame, outs):
 
 # function for drawing bounding boxes around detected objects
 def drawPred(frame,classId, conf, left, top, right, bottom):
-    # Draw a bounding box.
-    cv.rectangle(frame, (left, top), (right, bottom), (255, 178, 50), 3)
-
+    
     label = '%.2f' % conf
 
     # Get the label for the class name and its confidence
@@ -107,8 +105,15 @@ def drawPred(frame,classId, conf, left, top, right, bottom):
         if object_name in vehicles_objects:
             object_name = VEHICLE_TAG
         label = '%s:%s' % (object_name, label)
+
+    # Draw a bounding box.
+    if object_name == VEHICLE_TAG:
+        color_rect = (0, 0, 255)
+    else:
+        color_rect = (0, 255, 255)
+    cv.rectangle(frame, (left, top), (right, bottom), color_rect, 3)
     
-    cv.putText(frame, label, (left,top), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    #cv.putText(frame, label, (left,top), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
     return frame
 
 def predict(net,frame):

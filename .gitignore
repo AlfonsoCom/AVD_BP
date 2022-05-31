@@ -11,3 +11,4 @@ options.cfg
 .carla_object_detector/carla_yolov3_model/yolov3.weights
 .carla_object_detector/carla_yolov3_model/rec.mov
 *.pth
+waypoints.txt
