@@ -1498,11 +1498,13 @@ def main():
     argparser.add_argument(
         '-s', '--start',
         metavar='S',
+        default = PLAYER_START_INDEX,
         type=int,
         help='Player start index')
     argparser.add_argument(
         '-d', '--dest',
         metavar='D',
+        default = DESTINATION_INDEX,
         type=int,
         help='Player destination index')
     argparser.add_argument(
