@@ -55,8 +55,8 @@ USE_CAMERA = True
 ###############################################################################
 PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 100     # total number of pedestrians to spawn
-NUM_VEHICLES           = 100        # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 250     # total number of pedestrians to spawn
+NUM_VEHICLES           = 250        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1     # seed for vehicle spawn randomizer
 ###############################################################################
@@ -1051,21 +1051,21 @@ def exec_waypoint_nav_demo(args, host, port):
                     world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
                     world_frame_pedestrians.append(world_frame_point)
 
-                print("-"*50)
+                # print("-"*50)
                 
-                print("[EGO LOCATION]", current_x,current_y)
-                # TESTING
-                # print("[VEHICLES DETECTED FROM CAMERA]: ")
-                for v in world_frame_vehicles:
-                    print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
-                i = 0
-                for p in world_frame_pedestrians:
-                    print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
-                    #print(f"{p}, sidewalk: {sidewalk[i]}")
-                    i += 1
+                # print("[EGO LOCATION]", current_x,current_y)
+                # # TESTING
+                # # print("[VEHICLES DETECTED FROM CAMERA]: ")
+                # for v in world_frame_vehicles:
+                #     print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
+                # i = 0
+                # for p in world_frame_pedestrians:
+                #     print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
+                #     #print(f"{p}, sidewalk: {sidewalk[i]}")
+                #     i += 1
                 
 
-                print()
+                # print()
                 
 
                 ###############################################
@@ -1093,7 +1093,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = bb[0:-1:2]
                             orientation = orientation.yaw*math.pi/180
                             speed = agent.pedestrian.forward_speed
-                            print("REAL PED: ", location.x,location.y)
+                            # print("REAL PED: ", location.x,location.y)
 
                             pedestrian = Agent(agent.id,location,bb,orientation,speed,"Pedestrian")
                             pedestrians.append(pedestrian)
@@ -1113,7 +1113,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            print("REAL VEHICLE: ", location.x,location.y)
+                            # print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,location,bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
                             vehicles_dict[id] = vehicle 
@@ -1124,14 +1124,64 @@ def exec_waypoint_nav_demo(args, host, port):
                 # input-> world_frame_vehicles, world_frame_pedestrians, sidewalk
                 # output-> np array di pedoni
 
+                #########################################
+                # here make data association (remember to valuate it only on x and y)
+                # input-> world_frame_vehicles, world_frame_pedestrians, sidewalk
+                # output-> np array di pedoni
+                THRESHOLD_DISTANCE = 2.5 
+                vehicles_to_consider = []
+                indices_vehicles_associated = []
+
+                # associations = {}
+                for v in world_frame_vehicles:
+                    x_v,y_v = v[0][0],v[1][0]
+                    min_dist_v = math.inf
+                    min_index_v =  None  # DA RIVEDERE 
+                    for i_v, real_v in enumerate(vehicles):
+                        real_v_x, real_v_y = real_v.get_position()
+                        dist_v = np.subtract([x_v,y_v],[real_v_x,real_v_y])
+                        norm_v = np.linalg.norm(dist_v)
+                        if norm_v < min_dist_v and norm_v < THRESHOLD_DISTANCE and i_v not in indices_vehicles_associated:
+                            min_dist_v = norm_v
+                            min_index_v = i_v
+                    if min_index_v != None:
+                        vehicles_to_consider.append(vehicles[min_index_v])
+                        indices_vehicles_associated.append(min_index_v)
+                        # associations[f"{x_v},{y_v}"] = f"{vehicles[min_index_v].get_position()[0]},{vehicles[min_index_v].get_position()[1]}"
+
+                # print("DETECTED\tREAL")
+                # for k,v in associations.items():
+                #     print(k,"\t",v)
+                THRESHOLD_SPEED = 0.15
+                pedestrians_to_consider = []
+                indices_pedestrian_associated = []
+                for p in world_frame_pedestrians:
+                    x_p,y_p = p[0][0],p[1][0]
+                    min_dist_p = math.inf
+                    min_index_p =  None  # DA RIVEDERE 
+                    for i_p, real_p in enumerate(pedestrians):
+                        real_p_speed = real_p.get_speed()
+                        if(real_p_speed > THRESHOLD_SPEED):  # DA RIVEDERE
+                            real_p_x, real_p_y = real_p.get_position()
+                            dist_p = np.subtract([x_p,y_p],[real_p_x,real_p_y])
+                            norm_p = np.linalg.norm(dist_p)
+                            if norm_p<min_dist_p and norm_p < THRESHOLD_DISTANCE and i_p not in indices_pedestrian_associated:
+                                min_dist_p = norm_p
+                                min_index_p = i_p
+                    if min_index_p != None:
+                        pedestrians_to_consider.append(pedestrians[min_index_p])
+                        indices_pedestrian_associated.append(min_index_p)
+                #########################################
+
 
 
 
                 #########################################
 
-                
-                pedestrians = np.array(pedestrians,dtype=object)
-                vehicles = np.array(vehicles)
+                pedestrians = np.array(pedestrians_to_consider)
+                vehicles = np.array(vehicles_to_consider)
+                #pedestrians = np.array(pedestrians,dtype=object)
+                #vehicles = np.array(vehicles)
 
                 # set current info about traffic light (status), pedestrian and vehicle 
                 bp.set_tl_dict(tl_dict)
@@ -1169,23 +1219,8 @@ def exec_waypoint_nav_demo(args, host, port):
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
 
 
-                states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
-                print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
-                print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")
-                leader = bp._lead_vehicle
-                if leader is None:
-                    print(f"[LEAD_POS]: (XXX.XX, XXX.XX)", end='\t')
-                    print(f"[LEAD_YAW]: X.XX deg", end='\t')
-                    print(f"[LEAD_SPEED]: X.XX m/s")
-                else:
-                    leader_pos = leader.get_position()
-                    print(f"[LEAD_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
-                    print(f"[LEAD_YAW]: {round(leader.get_orientation(), 2)} deg", end='\t')
-                    print(f"[LEAD_SPEED]: {round(leader.get_speed(), 2)} m/s")
-                print()
-
-                bp.transition_state(waypoints, ego_state, current_speed)
-                if False:
+                # bp.transition_state(waypoints, ego_state, current_speed)
+                if True:
                     if WINDOWS_OS:
                         os.system("cls")
                     else:
