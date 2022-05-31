@@ -55,8 +55,8 @@ USE_CAMERA = True
 ###############################################################################
 PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 10     # total number of pedestrians to spawn
-NUM_VEHICLES           = 551        # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 100     # total number of pedestrians to spawn
+NUM_VEHICLES           = 100        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1     # seed for vehicle spawn randomizer
 ###############################################################################
@@ -1028,7 +1028,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
 
                 # USE this to convert a pixel in 3D  pixel should be [x,y,1] pixel_depth = depth_data[y1][x1]
-                #converter.convert_to_3D(pixel,pixel_depth,current_x,current_y,current_lead_car_y)
+                #converter.convert_to_3D(pixel,pixel_depth,current_x,current_y,current_yaw)
 
                 #depth camera
                 depth_data = sensor_data.get('CameraDepth', None)
@@ -1040,7 +1040,7 @@ def exec_waypoint_nav_demo(args, host, port):
                     middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
                     pixel = [middle_point[0], middle_point[1], 1]
                     pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_lead_car_y)
+                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
                     world_frame_vehicles.append(world_frame_point)
 
                 world_frame_pedestrians = [] #list of tuples of converted pixel in the world
@@ -1048,26 +1048,24 @@ def exec_waypoint_nav_demo(args, host, port):
                     middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
                     pixel = [middle_point[0], middle_point[1], 1]
                     pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_lead_car_y)
+                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
                     world_frame_pedestrians.append(world_frame_point)
 
+                print("-"*50)
                 
                 # TESTING
-                print("[VEHICLES DETECTED FROM CAMERA]: ")
+                #print("[VEHICLES DETECTED FROM CAMERA]: ")
                 for v in world_frame_vehicles:
-                    print(v)
-                print("[PEDESTRIANS DETECTED FROM CAMERA]: ")
-                i = 0
-                for p in world_frame_pedestrians:
-                    print(f"{p}, sidewalk: {sidewalk[i]}")
-                    i += 1
+                   
+                    print("VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
+                # print("[PEDESTRIANS DETECTED FROM CAMERA]: ")
+                # i = 0
+                # for p in world_frame_pedestrians:
+                #     print(f"{p}, sidewalk: {sidewalk[i]}")
+                #     i += 1
                 
 
-
-
-
-            
-
+                print()
                 
 
                 ###############################################
@@ -1113,6 +1111,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
+                            print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,location,bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
                             vehicles_dict[id] = vehicle 
@@ -1122,6 +1121,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 # here make data association (remember to valuate it only on x and y)
                 # input-> world_frame_vehicles, world_frame_pedestrians, sidewalk
                 # output-> np array di pedoni
+
 
 
 
@@ -1166,53 +1166,54 @@ def exec_waypoint_nav_demo(args, host, port):
                 # Set lookahead based on current speed.
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
 
-                if WINDOWS_OS:
-                    os.system("cls")
-                else:
-                    os.system("clear")
+                if False:
+                    if WINDOWS_OS:
+                        os.system("cls")
+                    else:
+                        os.system("clear")
 
-                print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
-                print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
+                    print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
+                    print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
 
-                # Perform a state transition in the behavioural planner.
-                bp.transition_state(waypoints, ego_state, current_speed)
+                    # Perform a state transition in the behavioural planner.
+                    bp.transition_state(waypoints, ego_state, current_speed)
 
-                states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
-                print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
-                print(f"[COLLISION]: {'Yes' if collided_flag else 'No'}")
+                    states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
+                    print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
+                    print(f"[COLLISION]: {'Yes' if collided_flag else 'No'}")
 
-                print(f"[EGO_POS]: ({round(current_x, 2)}, {round(current_y, 2)})", end='\t')
-                print(f"[EGO_YAW]: {round(current_yaw*180/math.pi, 2)} deg", end='\t')
-                print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")
+                    print(f"[EGO_POS]: ({round(current_x, 2)}, {round(current_y, 2)})", end='\t')
+                    print(f"[EGO_YAW]: {round(current_yaw*180/math.pi, 2)} deg", end='\t')
+                    print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")
 
-                print(f"[PEDESTRIAN_COLLISION_PREDICTED]: {'Yes' if bp._pedestrian_detected else 'No'}")
-                print(f"[VEHICLE_COLLISION_PREDICTED]: {'Yes' if bp._car_collision_predicted else 'No'}")
+                    print(f"[PEDESTRIAN_COLLISION_PREDICTED]: {'Yes' if bp._pedestrian_detected else 'No'}")
+                    print(f"[VEHICLE_COLLISION_PREDICTED]: {'Yes' if bp._car_collision_predicted else 'No'}")
 
-                # print(f"[PED_POS]: (XXX.XX, XXX.XX)", end='\t')
-                # print(f"[PED_YAW]: X.XX deg", end='\t')
-                # print(f"[PED_SPEED]: X.XX m/s")
+                    # print(f"[PED_POS]: (XXX.XX, XXX.XX)", end='\t')
+                    # print(f"[PED_YAW]: X.XX deg", end='\t')
+                    # print(f"[PED_SPEED]: X.XX m/s")
 
-                leader = bp._lead_vehicle
-                if leader is None:
-                    print(f"[LEAD_POS]: (XXX.XX, XXX.XX)", end='\t')
-                    print(f"[LEAD_YAW]: X.XX deg", end='\t')
-                    print(f"[LEAD_SPEED]: X.XX m/s")
-                else:
-                    leader_pos = leader.get_position()
-                    print(f"[LEAD_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
-                    print(f"[LEAD_YAW]: {round(leader.get_orientation(), 2)} deg", end='\t')
-                    print(f"[LEAD_SPEED]: {round(leader.get_speed(), 2)} m/s")
+                    leader = bp._lead_vehicle
+                    if leader is None:
+                        print(f"[LEAD_POS]: (XXX.XX, XXX.XX)", end='\t')
+                        print(f"[LEAD_YAW]: X.XX deg", end='\t')
+                        print(f"[LEAD_SPEED]: X.XX m/s")
+                    else:
+                        leader_pos = leader.get_position()
+                        print(f"[LEAD_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
+                        print(f"[LEAD_YAW]: {round(leader.get_orientation(), 2)} deg", end='\t')
+                        print(f"[LEAD_SPEED]: {round(leader.get_speed(), 2)} m/s")
 
-                tl = bp._current_traffic_light
-                if len(tl) != 0:
-                    print(f"[T_LIG_POS]: ({round(tl[1],2)}, {round(tl[2],2)})", end='\t')
-                    print(f"[T_LIG_YAW]: {round(tl[3],2)} deg", end='\t')
-                    statuses = ["GREEN", "YELLOW", "RED"]
-                    print(f"[T_LIG_STATUS]: {statuses[bp._tl_dict[tl[0]]]}")
-                else:
-                    print(f"[T_LIG_POS]: (XXX.XX, XXX.XX)", end='\t')
-                    print(f"[T_LIG_YAW]: X.XX deg", end='\t')
-                    print(f"[T_LIG_STATUS]: X.XX m/s")
+                    tl = bp._current_traffic_light
+                    if len(tl) != 0:
+                        print(f"[T_LIG_POS]: ({round(tl[1],2)}, {round(tl[2],2)})", end='\t')
+                        print(f"[T_LIG_YAW]: {round(tl[3],2)} deg", end='\t')
+                        statuses = ["GREEN", "YELLOW", "RED"]
+                        print(f"[T_LIG_STATUS]: {statuses[bp._tl_dict[tl[0]]]}")
+                    else:
+                        print(f"[T_LIG_POS]: (XXX.XX, XXX.XX)", end='\t')
+                        print(f"[T_LIG_YAW]: X.XX deg", end='\t')
+                        print(f"[T_LIG_STATUS]: X.XX m/s")
 
                 # Compute the goal state set from the behavioural planner's computed goal state.
                 goal_state_set = lp.get_goal_state_set(bp._goal_index, bp._goal_state, waypoints, ego_state)
