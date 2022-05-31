@@ -1055,10 +1055,9 @@ def exec_waypoint_nav_demo(args, host, port):
                 
                 print("[EGO LOCATION]", current_x,current_y)
                 # TESTING
-                #print("[VEHICLES DETECTED FROM CAMERA]: ")
-                # for v in world_frame_vehicles:
-                #     print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
-                # print("[PEDESTRIANS DETECTED FROM CAMERA]: ")
+                # print("[VEHICLES DETECTED FROM CAMERA]: ")
+                for v in world_frame_vehicles:
+                    print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
                 i = 0
                 for p in world_frame_pedestrians:
                     print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
@@ -1114,7 +1113,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            #print("REAL VEHICLE: ", location.x,location.y)
+                            print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,location,bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
                             vehicles_dict[id] = vehicle 
@@ -1184,6 +1183,8 @@ def exec_waypoint_nav_demo(args, host, port):
                     print(f"[LEAD_YAW]: {round(leader.get_orientation(), 2)} deg", end='\t')
                     print(f"[LEAD_SPEED]: {round(leader.get_speed(), 2)} m/s")
                 print()
+
+                bp.transition_state(waypoints, ego_state, current_speed)
                 if False:
                     if WINDOWS_OS:
                         os.system("cls")
