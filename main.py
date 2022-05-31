@@ -47,16 +47,15 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
-VIEWING_CAMERA = True
-USE_CAMERA = True
+USE_CAMERA = False
 
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
 PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 250     # total number of pedestrians to spawn
-NUM_VEHICLES           = 250        # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
+NUM_VEHICLES           = 500        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1     # seed for vehicle spawn randomizer
 ###############################################################################
