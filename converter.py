@@ -51,12 +51,21 @@ class Converter():
         yaw = math.radians(measurements.player_measurements.transform.rotation.yaw)
 
         """
+
         extrinsic_matrix = np.zeros((4,4))
         R = np.dot(rotate_z(yaw + 90 * pi / 180),rotate_x(90 * pi / 180))
         extrinsic_matrix[:3,:3] = R
         extrinsic_matrix[:,-1]  = [x, y, z, 1]
         self.inv_extrinsic_matrix = extrinsic_matrix
 
+
+        # R = np.dot(rotate_x(0 - 90* pi / 180), rotate_y(-yaw + 90* pi / 180))
+        # R = np.dot(R, rotate_z((0) + 90* pi / 180))
+
+
+        extrinsic_matrix[:3,:3] = R
+        extrinsic_matrix[:,-1]  = [x, y, z, 1]
+        return extrinsic_matrix
     
     def convert_to_3D(self,pixel,pixel_depth,ego_x,ego_y,ego_yaw):
             """
@@ -75,7 +84,7 @@ class Converter():
             sign_x = 1
             sign_y = 1
 
-            # check if that's improve performance or not
+            #check if that's improve performance or not
             if ego_yaw>= 0 and ego_yaw<=pi/2:
                 pass
             elif ego_yaw>pi/2 and ego_yaw<=pi:
@@ -85,6 +94,10 @@ class Converter():
                 sign_y = -1
             elif ego_yaw> -pi/2 and ego_yaw < 0:
                 sign_y = -1
+
+            # x   = ego_x + cos(ego_yaw)*self._camera_params["x"]
+            # y   = ego_y 
+            # z   = self._camera_params["z"]
 
             x   = ego_x + sign_x*self._camera_params["x"]
             y   = ego_y + sign_y*self._camera_params["y"]
