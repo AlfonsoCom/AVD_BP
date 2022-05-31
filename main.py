@@ -1040,7 +1040,7 @@ def exec_waypoint_nav_demo(args, host, port):
                     middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
                     pixel = [middle_point[0], middle_point[1], 1]
                     pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_lead_car_y)
+                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y, current_yaw) 
                     world_frame_vehicles.append(world_frame_point)
 
                 world_frame_pedestrians = [] #list of tuples of converted pixel in the world
@@ -1048,7 +1048,7 @@ def exec_waypoint_nav_demo(args, host, port):
                     middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
                     pixel = [middle_point[0], middle_point[1], 1]
                     pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_lead_car_y)
+                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
                     world_frame_pedestrians.append(world_frame_point)
 
                 
@@ -1445,12 +1445,16 @@ def main():
         '-s', '--start',
         metavar='S',
         type=int,
-        help='Player start index')
+        default = PLAYER_START_INDEX,
+        help='Player start index'
+        )
     argparser.add_argument(
         '-d', '--dest',
         metavar='D',
         type=int,
-        help='Player destination index')
+        default= DESTINATION_INDEX,
+        help='Player destination index'
+        )
     argparser.add_argument(
         '-a', '--autopilot',
         action='store_true',

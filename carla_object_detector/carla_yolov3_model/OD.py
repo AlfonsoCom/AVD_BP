@@ -108,7 +108,7 @@ def drawPred(frame,classId, conf, left, top, right, bottom):
             object_name = VEHICLE_TAG
         label = '%s:%s' % (object_name, label)
     
-    cv.putText(frame, label, (left,top), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    cv.putText(frame, label, (left,top), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
     return frame
 
 def predict(net,frame):
