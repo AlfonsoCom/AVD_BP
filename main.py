@@ -1053,16 +1053,17 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 print("-"*50)
                 
+                print("[EGO LOCATION]", current_x,current_y)
                 # TESTING
                 #print("[VEHICLES DETECTED FROM CAMERA]: ")
-                for v in world_frame_vehicles:
-                   
-                    print("VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
+                # for v in world_frame_vehicles:
+                #     print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
                 # print("[PEDESTRIANS DETECTED FROM CAMERA]: ")
-                # i = 0
-                # for p in world_frame_pedestrians:
-                #     print(f"{p}, sidewalk: {sidewalk[i]}")
-                #     i += 1
+                i = 0
+                for p in world_frame_pedestrians:
+                    print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
+                    #print(f"{p}, sidewalk: {sidewalk[i]}")
+                    i += 1
                 
 
                 print()
@@ -1093,6 +1094,8 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = bb[0:-1:2]
                             orientation = orientation.yaw*math.pi/180
                             speed = agent.pedestrian.forward_speed
+                            print("REAL PED: ", location.x,location.y)
+
                             pedestrian = Agent(agent.id,location,bb,orientation,speed,"Pedestrian")
                             pedestrians.append(pedestrian)
 
@@ -1111,7 +1114,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            print("REAL VEHICLE: ", location.x,location.y)
+                            #print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,location,bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
                             vehicles_dict[id] = vehicle 
@@ -1166,6 +1169,21 @@ def exec_waypoint_nav_demo(args, host, port):
                 # Set lookahead based on current speed.
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
 
+
+                states = ["FOLLOW_LANE", "DECELERATE_TO_STOP", "STAY_STOPPED"]
+                print(f"[CURRENT_STATE]: {states[bp._state]}", end="\t")
+                print(f"[EGO_SPEED]: {round(current_speed,2)} m/s")
+                leader = bp._lead_vehicle
+                if leader is None:
+                    print(f"[LEAD_POS]: (XXX.XX, XXX.XX)", end='\t')
+                    print(f"[LEAD_YAW]: X.XX deg", end='\t')
+                    print(f"[LEAD_SPEED]: X.XX m/s")
+                else:
+                    leader_pos = leader.get_position()
+                    print(f"[LEAD_POS]: ({round(leader_pos[0], 2)}, {round(leader_pos[1], 2)})", end='\t')
+                    print(f"[LEAD_YAW]: {round(leader.get_orientation(), 2)} deg", end='\t')
+                    print(f"[LEAD_SPEED]: {round(leader.get_speed(), 2)} m/s")
+                print()
                 if False:
                     if WINDOWS_OS:
                         os.system("cls")
