@@ -47,7 +47,7 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
-USE_CAMERA = False
+USE_CAMERA = True
 
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
