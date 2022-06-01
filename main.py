@@ -47,8 +47,6 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
-USE_CAMERA = False
-
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
@@ -269,7 +267,7 @@ def make_carla_settings(args):
     settings.add_sensor(camera1)
     settings.add_sensor(camera2)
     
-    if USE_CAMERA:
+    if not args.local:
         # Common cameras settings
         cam_height = camera_parameters_view['z'] 
         cam_x_pos = camera_parameters_view['x']
