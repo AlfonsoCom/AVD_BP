@@ -1118,12 +1118,6 @@ def exec_waypoint_nav_demo(args, host, port):
                             vehicles.append(vehicle)
                             # vehicles_dict[id] = vehicle 
 
-
-                #########################################
-                # here make data association (remember to valuate it only on x and y)
-                # input-> world_frame_vehicles, world_frame_pedestrians, sidewalk
-                # output-> np array di pedoni
-
                 #########################################
                 # here make data association (remember to valuate it only on x and y)
                 # input-> world_frame_vehicles, world_frame_pedestrians, sidewalk
