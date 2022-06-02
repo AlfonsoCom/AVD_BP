@@ -173,6 +173,108 @@ def rotate_z(angle):
                  [         0,          0, 1 ]])
     return R
 
+"""
+Args: 
+- net: rete addestrata a fare object detection su immagini
+- camera_data: dati della telecamera
+- seg_data: dati della telecamera di semantic segmentation
+- depth_data: dati dalla telecamera di profondità
+Returns:
+- world_frame_pedestrians: lista di coordinate (x,y) dei pedoni rilevati dalla telecamera nel mondo reale
+- world_frame_vehicles: come sopra ma per i veicoli
+"""
+def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw): 
+    ###################################
+    # GET BBs
+
+    bb = predict(net,camera_data)
+    camera_data, bb_dict= postprocess(camera_data,bb)
+    cv2.imshow("Detection box",camera_data)
+    cv2.waitKey(10)
+    
+    
+    #bbs vehicle and pedestrian
+    ## bb_p and bb_v are lists like [[(x,y),width,height]]
+    # NOTE to access to a specific pixel from bb x,y -> camera_data[y,x] 
+    #list of pedestrians bounding boxis
+    bb_p = bb_dict[PERSON_TAG]
+    
+    # list of bounding boxis
+
+    bb_v = bb_dict[VEHICLE_TAG]
+
+
+    ###################################
+    # MARK PEDESTRIAN BB ON SIDEWAYS
+    
+    # only pedestrian bb
+
+    # found point in the middle of bb vertex like X, x1 refer to (x,y) from one bb in bb_p
+    #   x1--------x2
+    #    |        | 
+    #   x3---X----x4
+    # 
+    # if X is on sidewalk (or x3 or x4) mark this pedestrian as on sidewalk
+    # in this section for each pedestrian bb check if point X is on sidewalk
+    
+    # USE FUNCTION : point_in_sidewalks(semSeg_data, point) NOTE: point must be provided as (y,x)
+
+    
+    count=0
+    sidewalk= {} #contains only the X on sidewalk, True if X is on sidewalk otherwise False
+    for bb in bb_p:
+        middle_point = compute_middle_point(bb[0][0], bb[0][1], bb[1], bb[2])
+        on_sidewalk = point_in_sidewalks(seg_data, middle_point)
+        sidewalk[count] = on_sidewalk
+
+        count+=1
+        
+
+    ###################################
+    # FOR EACH BB WE CAN CHOOSE X POINT DESCIBED IN PREVIUS SECTION TO GET VEHICLES POSITION
+    # IN 3D WORLD COORDINATE FRAME
+    # USING DEPTH CAMERA GET PEDESTRIAN BB AND VEHICLE BB IN WORLD COORDINATES FRAME
+
+
+    # USE this to convert a pixel in 3D  pixel should be [x,y,1] pixel_depth = depth_data[y1][x1]
+    #converter.convert_to_3D(pixel,pixel_depth,current_x,current_y,current_yaw)
+
+    world_frame_vehicles = [] #list of tuples of converted pixel in the world
+    for vehicle in bb_v:
+        middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
+        middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
+        pixel = [middle_point[0], middle_point[1], 1]
+        pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
+        world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
+        world_frame_vehicles.append(world_frame_point)
+
+    world_frame_pedestrians = [] #list of tuples of converted pixel in the world
+    for pedestrian in bb_p:
+        middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
+        middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
+        pixel = [middle_point[0], middle_point[1], 1]
+        pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
+        world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
+        world_frame_pedestrians.append(world_frame_point)
+
+    # print("-"*50)
+    
+    # print("[EGO LOCATION]", current_x,current_y)
+    # # TESTING
+    # # print("[VEHICLES DETECTED FROM CAMERA]: ")
+    # for v in world_frame_vehicles:
+    #     print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
+    # i = 0
+    # for p in world_frame_pedestrians:
+    #     print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
+    #     #print(f"{p}, sidewalk: {sidewalk[i]}")
+    #     i += 1
+    
+
+    # print()
+
+    return world_frame_vehicles, world_frame_pedestrians
+
 # Transform the obstacle with its boundary point in the global frame
 # bounding_box.transform.location, bounding_box.extent ,bounding_box.transform.rotation
 def obstacle_to_world(location, dimensions, orientation):
@@ -243,6 +345,15 @@ def make_carla_settings(args):
     camera_height = camera_parameters['height']
     camera_fov = camera_parameters['fov']
 
+    cam_height_bis = camera_parameters['z'] 
+    cam_x_pos_bis = camera_parameters['x']
+    cam_y_pos_bis = camera_parameters['y']
+    camera_pitch_bis = camera_parameters['pitch']
+    camera_roll_bis = camera_parameters['roll']
+    camera_yaw_bis = camera_parameters['yaw']
+    camera_width_bis = camera_parameters['width']
+    camera_height_bis = camera_parameters['height']
+    camera_fov_bis = camera_parameters['fov']
 
     # Declare here your sensors
     camera0 = Camera("CameraRGB")
@@ -250,6 +361,12 @@ def make_carla_settings(args):
     camera0.set(FOV=camera_fov)
     camera0.set_position(cam_x_pos, cam_y_pos, cam_height)
     camera0.set_rotation(camera_pitch, camera_roll, camera_yaw)
+
+    camera0bis = Camera("CameraRGBbis")
+    camera0bis.set_image_size(camera_width_bis, camera_height_bis)
+    camera0bis.set(FOV=camera_fov_bis)
+    camera0bis.set_position(cam_x_pos_bis, cam_y_pos_bis, cam_height_bis)
+    camera0bis.set_rotation(camera_pitch_bis, camera_roll_bis, camera_yaw_bis)
 
     camera1 = Camera("CameraSemSeg", PostProcessing="SemanticSegmentation")
     camera1.set_image_size(camera_width, camera_height)
@@ -264,6 +381,7 @@ def make_carla_settings(args):
     camera2.set_rotation(camera_pitch, camera_roll, camera_yaw)
 
     settings.add_sensor(camera0)
+    settings.add_sensor(camera0bis)
     settings.add_sensor(camera1)
     settings.add_sensor(camera2)
         
@@ -964,109 +1082,22 @@ def exec_waypoint_nav_demo(args, host, port):
                     camera_data = to_bgra_array(camera_data)[:,:,:3]
                     camera_data = np.copy(camera_data)
 
-                ###################################
-                # GET BBs
+                camera_data_bis = sensor_data.get("CameraRGBbis", None)
+                if camera_data_bis is not None:
+                    camera_data_bis = to_bgra_array(camera_data_bis)[:,:,:3]
+                    camera_data_bis = np.copy(camera_data_bis)
 
-                bb = predict(net,camera_data)
-                camera_data, bb_dict= postprocess(camera_data,bb)
-                cv2.imshow("Detection box",camera_data)
-                cv2.waitKey(10)
-                
-                
-                #bbs vehicle and pedestrian
-                ## bb_p and bb_v are lists like [[(x,y),width,height]]
-                # NOTE to access to a specific pixel from bb x,y -> camera_data[y,x] 
-                #list of pedestrians bounding boxis
-                bb_p = bb_dict[PERSON_TAG]
-                
-                # list of bounding boxis
-
-                bb_v = bb_dict[VEHICLE_TAG]
-
-
-                ###################################
-                # MARK PEDESTRIAN BB ON SIDEWAYS
-                
-                # only pedestrian bb
-
-                # found point in the middle of bb vertex like X, x1 refer to (x,y) from one bb in bb_p
-                #   x1--------x2
-                #    |        | 
-                #   x3---X----x4
-                # 
-                # if X is on sidewalk (or x3 or x4) mark this pedestrian as on sidewalk
-                # in this section for each pedestrian bb check if point X is on sidewalk
-                
-                # USE FUNCTION : point_in_sidewalks(semSeg_data, point) NOTE: point must be provided as (y,x)
-                
                 #output segmentation
                 seg_data = sensor_data.get('CameraSemSeg', None)
                 if seg_data is not None:
                     seg_data = seg_data.data
-                
-                count=0
-                sidewalk= {} #contains only the X on sidewalk, True if X is on sidewalk otherwise False
-                for bb in bb_p:
-                    middle_point = compute_middle_point(bb[0][0], bb[0][1], bb[1], bb[2])
-                    on_sidewalk = point_in_sidewalks(seg_data, middle_point)
-                    sidewalk[count] = on_sidewalk
-
-                    count+=1
-                    
-
-
-
-                
-                
-
-                ###################################
-                # FOR EACH BB WE CAN CHOOSE X POINT DESCIBED IN PREVIUS SECTION TO GET VEHICLES POSITION
-                # IN 3D WORLD COORDINATE FRAME
-                # USING DEPTH CAMERA GET PEDESTRIAN BB AND VEHICLE BB IN WORLD COORDINATES FRAME
-
-
-                # USE this to convert a pixel in 3D  pixel should be [x,y,1] pixel_depth = depth_data[y1][x1]
-                #converter.convert_to_3D(pixel,pixel_depth,current_x,current_y,current_yaw)
 
                 #depth camera
                 depth_data = sensor_data.get('CameraDepth', None)
                 if depth_data is not None:
                     depth_data = depth_data.data
 
-                world_frame_vehicles = [] #list of tuples of converted pixel in the world
-                for vehicle in bb_v:
-                    middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
-                    middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
-                    pixel = [middle_point[0], middle_point[1], 1]
-                    pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
-                    world_frame_vehicles.append(world_frame_point)
-
-                world_frame_pedestrians = [] #list of tuples of converted pixel in the world
-                for pedestrian in bb_p:
-                    middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
-                    middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
-                    pixel = [middle_point[0], middle_point[1], 1]
-                    pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-                    world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
-                    world_frame_pedestrians.append(world_frame_point)
-
-                # print("-"*50)
-                
-                # print("[EGO LOCATION]", current_x,current_y)
-                # # TESTING
-                # # print("[VEHICLES DETECTED FROM CAMERA]: ")
-                # for v in world_frame_vehicles:
-                #     print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
-                # i = 0
-                # for p in world_frame_pedestrians:
-                #     print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
-                #     #print(f"{p}, sidewalk: {sidewalk[i]}")
-                #     i += 1
-                
-
-                # print()
-                
+                world_frame_vehicles, world_frame_pedestrians = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw)
 
                 ###############################################
                 
