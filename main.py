@@ -47,16 +47,13 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
-VIEWING_CAMERA = True
-USE_CAMERA = True
-
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
 PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 250     # total number of pedestrians to spawn
-NUM_VEHICLES           = 250        # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
+NUM_VEHICLES           = 500        # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 1     # seed for vehicle spawn randomizer
 ###############################################################################
@@ -270,7 +267,7 @@ def make_carla_settings(args):
     settings.add_sensor(camera1)
     settings.add_sensor(camera2)
     
-    if USE_CAMERA:
+    if not args.local:
         # Common cameras settings
         cam_height = camera_parameters_view['z'] 
         cam_x_pos = camera_parameters_view['x']
@@ -1038,6 +1035,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 world_frame_vehicles = [] #list of tuples of converted pixel in the world
                 for vehicle in bb_v:
                     middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
+                    middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
                     pixel = [middle_point[0], middle_point[1], 1]
                     pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
                     world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
@@ -1046,6 +1044,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 world_frame_pedestrians = [] #list of tuples of converted pixel in the world
                 for pedestrian in bb_p:
                     middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
+                    middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
                     pixel = [middle_point[0], middle_point[1], 1]
                     pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
                     world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
@@ -1499,11 +1498,13 @@ def main():
     argparser.add_argument(
         '-s', '--start',
         metavar='S',
+        default = PLAYER_START_INDEX,
         type=int,
         help='Player start index')
     argparser.add_argument(
         '-d', '--dest',
         metavar='D',
+        default = DESTINATION_INDEX,
         type=int,
         help='Player destination index')
     argparser.add_argument(
