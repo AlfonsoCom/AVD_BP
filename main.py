@@ -141,8 +141,8 @@ camera_parameters['z'] = 1.3
 camera_parameters['pitch'] = 0.0 
 camera_parameters['roll'] = 0.0
 camera_parameters['yaw'] = 0.0
-camera_parameters['width'] = 200 
-camera_parameters['height'] = 200 
+camera_parameters['width'] = 224#200 
+camera_parameters['height'] = 224#200 
 camera_parameters['fov'] = 90
 
 camera_parameters_view = {}

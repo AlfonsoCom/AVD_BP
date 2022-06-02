@@ -13,6 +13,7 @@ from .config import *
 # VEHICLE_TAG = "vehicle"
 # PERSON_TAG = "person"
 
+YOLO_V4 = True
 file_path = os.path.dirname(__file__)
 
 # load names of classes and turn that into a list
@@ -24,13 +25,20 @@ vehicles_objects = ["bicycle","car","motorbike","aeroplane","bus","train","truck
 with open(classesFile,'rt') as f:
     classes = f.read().rstrip('\n').split('\n')
 
-# model configuration
-modelConf = os.path.join(file_path,'yolov3.cfg')
-modelWeights = os.path.join(file_path,'yolov3.weights')
+# # model configuration
+if not YOLO_V4:
+    modelConf = os.path.join(file_path,'yolov3.cfg')
+    modelWeights = os.path.join(file_path,'yolov3.weights')
+else:
+    modelConf = os.path.join(file_path,'yolov4.cfg')
+    modelWeights = os.path.join(file_path,'yolov4.weights')
 
 def load_model():
     # set up the net
-    net = cv.dnn.readNetFromDarknet(modelConf, modelWeights)
+    if YOLO_V4:
+        net = cv.dnn.readNet(modelConf, modelWeights)
+    else:
+        net = cv.dnn.readNetFromDarknet(modelConf, modelWeights)
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
     net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
 
@@ -111,7 +119,7 @@ def drawPred(frame,classId, conf, left, top, right, bottom):
         color_rect = (0, 0, 255)
     else:
         color_rect = (0, 255, 255)
-    cv.rectangle(frame, (left, top), (right, bottom), color_rect, 3)
+    cv.rectangle(frame, (left, top), (right, bottom), color_rect, 2)
     
     #cv.putText(frame, label, (left,top), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
     return frame
