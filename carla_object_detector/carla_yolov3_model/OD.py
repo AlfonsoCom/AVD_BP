@@ -27,16 +27,19 @@ with open(classesFile,'rt') as f:
 
 # # model configuration
 if not YOLO_V4:
+    # https://github.com/aoruize/carla-yolov3-model
     modelConf = os.path.join(file_path,'yolov3.cfg')
     modelWeights = os.path.join(file_path,'yolov3.weights')
 else:
+    # https://github.com/AnuragGupta806/Carla-Autonomous-Vehicle
     modelConf = os.path.join(file_path,'yolov4.cfg')
     modelWeights = os.path.join(file_path,'yolov4.weights')
 
 def load_model():
     # set up the net
     if YOLO_V4:
-        net = cv.dnn.readNet(modelConf, modelWeights)
+        net = cv.dnn.readNetFromDarknet(modelConf, modelWeights)
+        # net = cv.dnn.readNet(modelConf, modelWeights)
     else:
         net = cv.dnn.readNetFromDarknet(modelConf, modelWeights)
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)

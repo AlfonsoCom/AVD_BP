@@ -153,9 +153,11 @@ class BehaviouralPlanner:
             else:
                 # If a lead vehicle is known checks if it is still a lead vehicle 
                 id = self._lead_vehicle.get_id()
-                self._lead_vehicle = self._vehicles_dict[id]
-                self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],np.array([self._lead_vehicle],dtype=object),self._follow_lead_vehicle_lookahead+10)
-
+                try:
+                    self._lead_vehicle = self._vehicles_dict[id]
+                    self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],np.array([self._lead_vehicle],dtype=object),self._follow_lead_vehicle_lookahead+10)
+                except KeyError:
+                    self._lead_vehicle = None
                 #self.check_for_lead_vehicle(ego_state, self._lead_vehicle.get_position())
                 if self._lead_vehicle is  None:
                     self._follow_lead_vehicle = False

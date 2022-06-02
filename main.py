@@ -266,7 +266,7 @@ def make_carla_settings(args):
     settings.add_sensor(camera0)
     settings.add_sensor(camera1)
     settings.add_sensor(camera2)
-    
+        
     if not args.local:
         # Common cameras settings
         cam_height = camera_parameters_view['z'] 
@@ -905,7 +905,7 @@ def exec_waypoint_nav_demo(args, host, port):
         prev_collision_other       = 0
 
 
-        vehicles_dict = {}
+        # vehicles_dict = {}
 
     
         ###################################
@@ -919,6 +919,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
             # UPDATE HERE the obstacles list
             obstacles = []
+            vehicles_dict = {}
            
             # Update pose and timestamp
             prev_timestamp = current_timestamp
@@ -1115,7 +1116,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             # print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,location,bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
-                            vehicles_dict[id] = vehicle 
+                            # vehicles_dict[id] = vehicle 
 
 
                 #########################################
@@ -1144,8 +1145,12 @@ def exec_waypoint_nav_demo(args, host, port):
                             min_dist_v = norm_v
                             min_index_v = i_v
                     if min_index_v != None:
-                        vehicles_to_consider.append(vehicles[min_index_v])
+                        vehicle = vehicles[min_index_v]
+                        vehicles_dict[vehicle.get_id()] = vehicle 
+                        vehicles_to_consider.append(vehicle)
                         indices_vehicles_associated.append(min_index_v)
+                        
+
                         # associations[f"{x_v},{y_v}"] = f"{vehicles[min_index_v].get_position()[0]},{vehicles[min_index_v].get_position()[1]}"
 
                 # print("DETECTED\tREAL")
@@ -1179,8 +1184,8 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 pedestrians = np.array(pedestrians_to_consider)
                 vehicles = np.array(vehicles_to_consider)
-                #pedestrians = np.array(pedestrians,dtype=object)
-                #vehicles = np.array(vehicles)
+                # pedestrians = np.array(pedestrians,dtype=object)
+                # vehicles = np.array(vehicles)
 
                 # set current info about traffic light (status), pedestrian and vehicle 
                 bp.set_tl_dict(tl_dict)
