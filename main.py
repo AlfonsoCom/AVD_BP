@@ -374,16 +374,30 @@ def make_carla_settings(args):
     camera1.set_position(cam_x_pos, cam_y_pos, cam_height)
     camera1.set_rotation(camera_pitch, camera_roll, camera_yaw)
 
+    camera1bis = Camera("CameraSemSegbis", PostProcessing="SemanticSegmentation")
+    camera1bis.set_image_size(camera_width_bis, camera_height_bis)
+    camera1bis.set(FOV=camera_fov_bis)
+    camera1bis.set_position(cam_x_pos_bis, cam_y_pos_bis, cam_height_bis)
+    camera1bis.set_rotation(camera_pitch_bis, camera_roll_bis, camera_yaw_bis)
+
     camera2 = Camera("CameraDepth", PostProcessing="Depth")
     camera2.set_image_size(camera_width, camera_height)
     camera2.set(FOV=camera_fov)
     camera2.set_position(cam_x_pos, cam_y_pos, cam_height)
     camera2.set_rotation(camera_pitch, camera_roll, camera_yaw)
 
+    camera2bis = Camera("CameraDepthbis", PostProcessing="Depth")
+    camera2bis.set_image_size(camera_width_bis, camera_height_bis)
+    camera2bis.set(FOV=camera_fov_bis)
+    camera2bis.set_position(cam_x_pos_bis, cam_y_pos_bis, cam_height_bis)
+    camera2bis.set_rotation(camera_pitch_bis, camera_roll_bis, camera_yaw_bis)
+
     settings.add_sensor(camera0)
     settings.add_sensor(camera0bis)
     settings.add_sensor(camera1)
+    settings.add_sensor(camera1bis)
     settings.add_sensor(camera2)
+    settings.add_sensor(camera2bis)
         
     if not args.local:
         # Common cameras settings
@@ -1092,12 +1106,24 @@ def exec_waypoint_nav_demo(args, host, port):
                 if seg_data is not None:
                     seg_data = seg_data.data
 
+                seg_data_bis = sensor_data.get('CameraSemSegbis', None)
+                if seg_data_bis is not None:
+                    seg_data_bis = seg_data_bis.data
+
                 #depth camera
                 depth_data = sensor_data.get('CameraDepth', None)
                 if depth_data is not None:
                     depth_data = depth_data.data
 
+                depth_data_bis = sensor_data.get('CameraDepthbis', None)
+                if depth_data_bis is not None:
+                    depth_data_bis = depth_data_bis.data
+
                 world_frame_vehicles, world_frame_pedestrians = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw)
+                wfv_bis, wfp_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_y)
+
+                world_frame_vehicles += wfv_bis
+                world_frame_pedestrians += wfp_bis
 
                 ###############################################
                 
