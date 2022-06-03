@@ -142,6 +142,17 @@ camera_parameters['width'] = 224#200
 camera_parameters['height'] = 224#200 
 camera_parameters['fov'] = 90
 
+camera_parameters_bis = {}
+camera_parameters_bis['x'] = 1.8 
+camera_parameters_bis['y'] = 0.0
+camera_parameters_bis['z'] = 1.3
+camera_parameters_bis['pitch'] = 0.0 
+camera_parameters_bis['roll'] = 0.0
+camera_parameters_bis['yaw'] = 0.0
+camera_parameters_bis['width'] = 224#200 
+camera_parameters_bis['height'] = 224#200 
+camera_parameters_bis['fov'] = 90
+
 camera_parameters_view = {}
 camera_parameters_view['x'] = -5.0
 camera_parameters_view['y'] = 0.0
@@ -152,8 +163,6 @@ camera_parameters_view['yaw'] = 0.0
 camera_parameters_view['width'] = 500 
 camera_parameters_view['height'] = 500
 camera_parameters_view['fov'] = 90
-
-converter = Converter(camera_parameters)
 
 def rotate_x(angle):
     R = np.mat([[ 1,         0,           0],
@@ -183,20 +192,25 @@ Returns:
 - world_frame_pedestrians: lista di coordinate (x,y) dei pedoni rilevati dalla telecamera nel mondo reale
 - world_frame_vehicles: come sopra ma per i veicoli
 """
-def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw): 
+def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters, bis=False): 
+    converter = Converter(camera_parameters)
+    
     ###################################
     # GET BBs
 
     bb = predict(net,camera_data)
     camera_data, bb_dict= postprocess(camera_data,bb)
-    cv2.imshow("Detection box",camera_data)
+    if bis:
+        cv2.imshow("Detection box bis",camera_data)
+    else:
+        cv2.imshow("Detection box",camera_data)
     cv2.waitKey(10)
     
     
     #bbs vehicle and pedestrian
     ## bb_p and bb_v are lists like [[(x,y),width,height]]
     # NOTE to access to a specific pixel from bb x,y -> camera_data[y,x] 
-    #list of pedestrians bounding boxis
+    #list of pedestrians bounding boxes
     bb_p = bb_dict[PERSON_TAG]
     
     # list of bounding boxis
@@ -256,19 +270,19 @@ def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_
         pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
         world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
         world_frame_pedestrians.append(world_frame_point)
-
-    # print("-"*50)
     
     # print("[EGO LOCATION]", current_x,current_y)
-    # # TESTING
-    # # print("[VEHICLES DETECTED FROM CAMERA]: ")
-    # for v in world_frame_vehicles:
-    #     print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
-    # i = 0
-    # for p in world_frame_pedestrians:
-    #     print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
-    #     #print(f"{p}, sidewalk: {sidewalk[i]}")
-    #     i += 1
+    # TESTING
+    # print("[VEHICLES DETECTED FROM CAMERA]: ")
+    if bis:
+        print("CAMERA_BIS")
+    else:
+        print("CAMERA")
+    for v in world_frame_vehicles:
+        print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
+    for i,p in enumerate(world_frame_pedestrians):
+        print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
+        #print(f"{p}, sidewalk: {sidewalk[i]}")
     
 
     # print()
@@ -345,15 +359,15 @@ def make_carla_settings(args):
     camera_height = camera_parameters['height']
     camera_fov = camera_parameters['fov']
 
-    cam_height_bis = camera_parameters['z'] 
-    cam_x_pos_bis = camera_parameters['x']
-    cam_y_pos_bis = camera_parameters['y']
-    camera_pitch_bis = camera_parameters['pitch']
-    camera_roll_bis = camera_parameters['roll']
-    camera_yaw_bis = camera_parameters['yaw']
-    camera_width_bis = camera_parameters['width']
-    camera_height_bis = camera_parameters['height']
-    camera_fov_bis = camera_parameters['fov']
+    cam_height_bis = camera_parameters_bis['z'] 
+    cam_x_pos_bis = camera_parameters_bis['x']
+    cam_y_pos_bis = camera_parameters_bis['y']
+    camera_pitch_bis = camera_parameters_bis['pitch']
+    camera_roll_bis = camera_parameters_bis['roll']
+    camera_yaw_bis = camera_parameters_bis['yaw']
+    camera_width_bis = camera_parameters_bis['width']
+    camera_height_bis = camera_parameters_bis['height']
+    camera_fov_bis = camera_parameters_bis['fov']
 
     # Declare here your sensors
     camera0 = Camera("CameraRGB")
@@ -1119,8 +1133,10 @@ def exec_waypoint_nav_demo(args, host, port):
                 if depth_data_bis is not None:
                     depth_data_bis = depth_data_bis.data
 
-                world_frame_vehicles, world_frame_pedestrians = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw)
-                wfv_bis, wfp_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_y)
+                print("-"*50)
+
+                world_frame_vehicles, world_frame_pedestrians = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters)
+                wfv_bis, wfp_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_y, camera_parameters_bis, True)
 
                 world_frame_vehicles += wfv_bis
                 world_frame_pedestrians += wfp_bis
@@ -1150,7 +1166,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = bb[0:-1:2]
                             orientation = orientation.yaw*math.pi/180
                             speed = agent.pedestrian.forward_speed
-                            # print("REAL PED: ", location.x,location.y)
+                            print("REAL PED: ", location.x,location.y)
 
                             pedestrian = Agent(agent.id,location,bb,orientation,speed,"Pedestrian")
                             pedestrians.append(pedestrian)
@@ -1170,7 +1186,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            # print("REAL VEHICLE: ", location.x,location.y)
+                            print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,location,bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
                             # vehicles_dict[id] = vehicle 
@@ -1276,10 +1292,10 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 # bp.transition_state(waypoints, ego_state, current_speed)
                 if True:
-                    if WINDOWS_OS:
+                    '''if WINDOWS_OS:
                         os.system("cls")
                     else:
-                        os.system("clear")
+                        os.system("clear")'''
 
                     print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
                     print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
@@ -1587,7 +1603,8 @@ def main():
     if not args.local:
         host = SERVER_HOST; port = SERVER_PORT
     else:
-        host = LOCAL_HOST; port = LOCAL_PORT
+        #host = LOCAL_HOST; port = LOCAL_PORT
+        host = "192.168.1.128"; port = 2000
     
     logging.info('listening to server %s:%s', host, port)
 
