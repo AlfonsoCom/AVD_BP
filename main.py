@@ -678,13 +678,19 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
 
         # if an association is found
         if association_index is not None: 
+            position = (real_data[association_index][0],real_data[association_index][1])
+            yaw = d.get_orientation()
+            bb = d.get_bounding_box()
+            speed = d.get_speed()
+            id = d.get_id()
             if not pedestrian:
-                data_to_consider.append(real_data[association_index])
+                data_to_consider.append(Agent(id,position,bb,yaw,speed,"Vehicle"))
             else:
                 # if the detected pedestrian is one sidewalk and its speed is less than THRESHOLD_SPEED
                 # no association must be made
-                if not(sidewalk_to_consider[association_index] and d.get_speed()<THRESHOLD_SPEED):
-                    data_to_consider.append(real_data[association_index])
+                if not(sidewalk_to_consider[association_index] and speed<THRESHOLD_SPEED):
+                    data_to_consider.append(Agent(id,position,bb,yaw,speed,"Pedestrian"))
+
     
     return data_to_consider
                     
@@ -1264,69 +1270,13 @@ def exec_waypoint_nav_demo(args, host, port):
                 # here make data association (remember to valuate it only on x and y)
                 # input-> world_frame_vehicles, world_frame_pedestrians, sidewalk
                 # output-> np array di pedoni
-                THRESHOLD_DISTANCE = 2.5 
-                vehicles_to_consider = []
-                indices_vehicles_associated = []
 
-                # associations = {}
-                for v in world_frame_vehicles:
-                    x_v,y_v = v[0][0],v[1][0]
-                    min_dist_v = math.inf
-                    min_index_v =  None  # DA RIVEDERE 
-                    for i_v, real_v in enumerate(vehicles):
-                        real_v_x, real_v_y = real_v.get_position()
-                        dist_v = np.subtract([x_v,y_v],[real_v_x,real_v_y])
-                        norm_v = np.linalg.norm(dist_v)
-                        if norm_v < min_dist_v and norm_v < THRESHOLD_DISTANCE and i_v not in indices_vehicles_associated:
-                            min_dist_v = norm_v
-                            min_index_v = i_v
-                    if min_index_v != None:
-                        vehicle = vehicles[min_index_v]
-                        vehicles_dict[vehicle.get_id()] = vehicle 
-                        vehicles_to_consider.append(vehicle)
-                        indices_vehicles_associated.append(min_index_v)
-                        
+                pedestrians_to_consider = association_vehicle_pedestrian(pedestrians,
+                world_frame_pedestrians,wfp_bis,sidewalk,sidewalk_bis,True)
 
-                        # associations[f"{x_v},{y_v}"] = f"{vehicles[min_index_v].get_position()[0]},{vehicles[min_index_v].get_position()[1]}"
+                vehicles_to_consider = association_vehicle_pedestrian(vehicles,
+                world_frame_vehicles,wfv_bis)
 
-                # print("DETECTED\tREAL")
-                # for k,v in associations.items():
-                #     print(k,"\t",v)
-                THRESHOLD_SPEED = 0.15
-                pedestrians_to_consider = []
-                indices_pedestrian_associated = []
-                for p in world_frame_pedestrians:
-                    x_p,y_p = p[0][0],p[1][0]
-                    min_dist_p = math.inf
-                    min_index_p =  None  # DA RIVEDERE 
-                    for i_p, real_p in enumerate(pedestrians):
-                        real_p_speed = real_p.get_speed()
-                        if(real_p_speed > THRESHOLD_SPEED):  # DA RIVEDERE
-                            real_p_x, real_p_y = real_p.get_position()
-                            dist_p = np.subtract([x_p,y_p],[real_p_x,real_p_y])
-                            norm_p = np.linalg.norm(dist_p)
-                            if norm_p<min_dist_p and norm_p < THRESHOLD_DISTANCE and i_p not in indices_pedestrian_associated:
-                                min_dist_p = norm_p
-                                min_index_p = i_p
-                    if min_index_p != None:
-                        pedestrians_to_consider.append(pedestrians[min_index_p])
-                        indices_pedestrian_associated.append(min_index_p)
-                #########################################
-                
-                #pedestrian = Agent(agent.id,location,bb,orientation,speed,"Pedestrian")
-                #vehicle = Agent(agent.id,location,bb,orientation,speed,"Vehicle")
-
-                """for p in pedestrians:
-                    for pp in world_frame_pedestrians: #from camera0 
-                        min_dist = math.inf
-                    for pp_bis in wfp_bis: #from camera0bis"""
-
-
-
-
-
-
-                #########################################
 
                 pedestrians = np.array(pedestrians_to_consider)
                 vehicles = np.array(vehicles_to_consider)
