@@ -151,7 +151,7 @@ camera_parameters_bis['roll'] = 0.0
 camera_parameters_bis['yaw'] = 0.0
 camera_parameters_bis['width'] = 224#200 
 camera_parameters_bis['height'] = 224#200 
-camera_parameters_bis['fov'] = 90
+camera_parameters_bis['fov'] = 120
 
 camera_parameters_view = {}
 camera_parameters_view['x'] = -5.0
@@ -182,17 +182,18 @@ def rotate_z(angle):
                  [         0,          0, 1 ]])
     return R
 
-"""
-Args: 
-- net: rete addestrata a fare object detection su immagini
-- camera_data: dati della telecamera
-- seg_data: dati della telecamera di semantic segmentation
-- depth_data: dati dalla telecamera di profondità
-Returns:
-- world_frame_pedestrians: lista di coordinate (x,y) dei pedoni rilevati dalla telecamera nel mondo reale
-- world_frame_vehicles: come sopra ma per i veicoli
-"""
+
 def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters, bis=False): 
+    """
+        Args: 
+        - net: rete addestrata a fare object detection su immagini
+        - camera_data: dati della telecamera
+        - seg_data: dati della telecamera di semantic segmentation
+        - depth_data: dati dalla telecamera di profondità
+        Returns:
+        - world_frame_pedestrians: lista di coordinate (x,y) dei pedoni rilevati dalla telecamera nel mondo reale
+        - world_frame_vehicles: come sopra ma per i veicoli
+    """
     converter = Converter(camera_parameters)
     
     ###################################
@@ -283,11 +284,8 @@ def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_
     for i,p in enumerate(world_frame_pedestrians):
         print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
         #print(f"{p}, sidewalk: {sidewalk[i]}")
-    
 
-    # print()
-
-    return world_frame_vehicles, world_frame_pedestrians
+    return world_frame_vehicles, world_frame_pedestrians, sidewalk
 
 # Transform the obstacle with its boundary point in the global frame
 # bounding_box.transform.location, bounding_box.extent ,bounding_box.transform.rotation
@@ -1135,11 +1133,11 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 print("-"*50)
 
-                world_frame_vehicles, world_frame_pedestrians = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters)
-                wfv_bis, wfp_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_y, camera_parameters_bis, True)
+                world_frame_vehicles, world_frame_pedestrians,sidewalk = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters)
+                wfv_bis, wfp_bis, sidewalk_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_yaw, camera_parameters_bis, True)
 
-                world_frame_vehicles += wfv_bis
-                world_frame_pedestrians += wfp_bis
+                # world_frame_vehicles += wfv_bis
+                # world_frame_pedestrians += wfp_bis
 
                 ###############################################
                 
