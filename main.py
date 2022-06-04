@@ -272,18 +272,18 @@ def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_
         world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
         world_frame_pedestrians.append(world_frame_point)
     
-    # print("[EGO LOCATION]", current_x,current_y)
-    # TESTING
-    # print("[VEHICLES DETECTED FROM CAMERA]: ")
-    if bis:
-        print("CAMERA_BIS")
-    else:
-        print("CAMERA")
-    for v in world_frame_vehicles:
-        print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
-    for i,p in enumerate(world_frame_pedestrians):
-        print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
-        #print(f"{p}, sidewalk: {sidewalk[i]}")
+    # # print("[EGO LOCATION]", current_x,current_y)
+    # # TESTING
+    # # print("[VEHICLES DETECTED FROM CAMERA]: ")
+    # if bis:
+    #     print("CAMERA_BIS")
+    # else:
+    #     print("CAMERA")
+    # for v in world_frame_vehicles:
+    #     print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
+    # for i,p in enumerate(world_frame_pedestrians):
+    #     print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
+    #     #print(f"{p}, sidewalk: {sidewalk[i]}")
 
     return world_frame_vehicles, world_frame_pedestrians, sidewalk
 
@@ -627,34 +627,38 @@ def found_nearest_object(position,objects_position,objects_just_assoicated):
         nearest to the given position.
         All indices just used are provided in objects_just_associated list
     """
-    THRESHOLD_DISTANCE = 2.5
+    THRESHOLD_DISTANCE = 3
     min_index = None
     min_dist = math.inf
 
     for i, object_position in enumerate(objects_position): #from camera0
         x_point, y_point = object_position[0][0], object_position[1][0] # prendere i dati dagli attributi di world_frame
+        # print("NEAREST_FUNC ",x_point,y_point,"\n")
         dist = np.subtract(position,[x_point, y_point])
         norm = np.linalg.norm(dist)
         # an association is found
         if norm < min_dist and norm < THRESHOLD_DISTANCE and i not in objects_just_assoicated:
+            # print("[NEAREST_FUNC] REALDATA ",x_point,y_point)
+            # print("[NEAREST_FUNC] PERFECT DATA ",position,"\n")
             min_dist = norm
             min_index = i
     return min_index
 
 
-def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidewalk=None, sidewalk_bis = None, pedestrian=True):
+def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidewalk=None, sidewalk_bis = None, pedestrian=False):
     # THRESHOLD_DISTANCE = 2.5
     THRESHOLD_SPEED = 0.15
 
     indices_associated = []
     data_to_consider = []
     indices_associated_bis = []
-    
+    vehicle_dict = {}
     
     # for each real data to associate to given detected data
     for d in perfect_data:
         x, y = d.get_position()
         
+        # print("Pedestrian: ", pedestrian)
         min_index= found_nearest_object([x,y],real_data,indices_associated)
         min_index_bis = found_nearest_object([x,y],real_data_bis,indices_associated_bis)
 
@@ -664,35 +668,45 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
 
         # sidewalk for pedestrian association 
         sidewalk_to_consider = None
-
+        pose = None
         #if a perfect object is associated to both real_data and real_data_bis we
         # decide to associate it to real_data object
         if min_index is None and min_index_bis != None:
             association_index = min_index_bis
+            pose = real_data_bis[association_index]
             sidewalk_to_consider = sidewalk_bis
             indices_associated_bis.append(min_index_bis)
         elif min_index != None:
             association_index = min_index
+            pose = real_data[association_index]
             sidewalk_to_consider = sidewalk
             indices_associated.append(min_index)
 
+
+        if not pedestrian:
+                camera_used = "BIS" if min_index_bis != None else "0"
+                print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose} to vehicle {d.get_position()}")
         # if an association is found
         if association_index is not None: 
-            position = (real_data[association_index][0],real_data[association_index][1])
+            # pose = real_data[association_index]
+            # position = (pose[0],pose[1])
+            position = d.get_position()
             yaw = d.get_orientation()
             bb = d.get_bounding_box()
             speed = d.get_speed()
             id = d.get_id()
             if not pedestrian:
-                data_to_consider.append(Agent(id,position,bb,yaw,speed,"Vehicle"))
+                vehicle = Agent(id,position,bb,yaw,speed,"Vehicle")
+                data_to_consider.append(vehicle)
+                vehicle_dict[id] = vehicle
             else:
                 # if the detected pedestrian is one sidewalk and its speed is less than THRESHOLD_SPEED
                 # no association must be made
-                if not(sidewalk_to_consider[association_index] and speed<THRESHOLD_SPEED):
+                if sidewalk_to_consider is not None and not(sidewalk_to_consider[association_index] and speed<THRESHOLD_SPEED):
                     data_to_consider.append(Agent(id,position,bb,yaw,speed,"Pedestrian"))
 
     
-    return data_to_consider
+    return data_to_consider, vehicle_dict
                     
 
 
@@ -1208,13 +1222,24 @@ def exec_waypoint_nav_demo(args, host, port):
                 if depth_data_bis is not None:
                     depth_data_bis = depth_data_bis.data
 
-                print("-"*50)
+                # print("-"*50)
 
                 world_frame_vehicles, world_frame_pedestrians,sidewalk = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters)
                 wfv_bis, wfp_bis, sidewalk_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_yaw, camera_parameters_bis, True)
 
                 # world_frame_vehicles += wfv_bis
                 # world_frame_pedestrians += wfp_bis
+
+                # for p in world_frame_vehicles:
+                #     print("CAMERA 0 vehicles ", p)
+
+                # print()
+
+
+                # for p in wfv_bis:
+                #     print("CAMERA BIS vehicles ", p)
+
+                # print()
 
                 ###############################################
                 
@@ -1241,9 +1266,9 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = bb[0:-1:2]
                             orientation = orientation.yaw*math.pi/180
                             speed = agent.pedestrian.forward_speed
-                            print("REAL PED: ", location.x,location.y)
+                            # print("REAL PED: ", location.x,location.y)
 
-                            pedestrian = Agent(agent.id,location,bb,orientation,speed,"Pedestrian")
+                            pedestrian = Agent(agent.id,[location.x,location.y],bb,orientation,speed,"Pedestrian")
                             pedestrians.append(pedestrian)
 
                     if agent.HasField("vehicle"):
@@ -1261,8 +1286,8 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            print("REAL VEHICLE: ", location.x,location.y)
-                            vehicle = Agent(id,location,bb,orientation.yaw,speed,"Vehicle")
+                            # print("REAL VEHICLE: ", location.x,location.y)
+                            vehicle = Agent(id,[location.x,location.y],bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
                             # vehicles_dict[id] = vehicle 
 
@@ -1271,10 +1296,11 @@ def exec_waypoint_nav_demo(args, host, port):
                 # input-> world_frame_vehicles, world_frame_pedestrians, sidewalk
                 # output-> np array di pedoni
 
-                pedestrians_to_consider = association_vehicle_pedestrian(pedestrians,
+                
+                pedestrians_to_consider,_ = association_vehicle_pedestrian(pedestrians,
                 world_frame_pedestrians,wfp_bis,sidewalk,sidewalk_bis,True)
 
-                vehicles_to_consider = association_vehicle_pedestrian(vehicles,
+                vehicles_to_consider, vehicles_dict = association_vehicle_pedestrian(vehicles,
                 world_frame_vehicles,wfv_bis)
 
 
@@ -1321,10 +1347,10 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 # bp.transition_state(waypoints, ego_state, current_speed)
                 if True:
-                    '''if WINDOWS_OS:
+                    if WINDOWS_OS:
                         os.system("cls")
                     else:
-                        os.system("clear")'''
+                        os.system("clear")
 
                     print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
                     print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
