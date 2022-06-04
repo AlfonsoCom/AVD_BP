@@ -14,7 +14,7 @@ class Agent():
 
     def get_position(self):
         pos = self._position
-        return [pos.x, pos.y]
+        return [pos[0], pos[1]]
 
     def get_bounding_box(self):
         return self._bb
