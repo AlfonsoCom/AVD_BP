@@ -619,6 +619,77 @@ def make_correction(waypoint,previuos_waypoint,desired_speed):
     waypoint_on_lane[2] = desired_speed
 
     return waypoint_on_lane
+
+
+def found_nearest_object(position,objects_position,objects_just_assoicated):
+    """
+        Given the list of objects position found the index of the object position
+        nearest to the given position.
+        All indices just used are provided in objects_just_associated list
+    """
+    THRESHOLD_DISTANCE = 2.5
+    min_index = None
+    min_dist = math.inf
+
+    for i, object_position in enumerate(objects_position): #from camera0
+        x_point, y_point = object_position[0][0], object_position[1][0] # prendere i dati dagli attributi di world_frame
+        dist = np.subtract(position,[x_point, y_point])
+        norm = np.linalg.norm(dist)
+        # an association is found
+        if norm < min_dist and norm < THRESHOLD_DISTANCE and i not in objects_just_assoicated:
+            min_dist = norm
+            min_index = i
+    return min_index
+
+
+def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidewalk=None, sidewalk_bis = None, pedestrian=True):
+    # THRESHOLD_DISTANCE = 2.5
+    THRESHOLD_SPEED = 0.15
+
+    indices_associated = []
+    data_to_consider = []
+    indices_associated_bis = []
+    
+    
+    # for each real data to associate to given detected data
+    for d in perfect_data:
+        x, y = d.get_position()
+        
+        min_index= found_nearest_object([x,y],real_data,indices_associated)
+        min_index_bis = found_nearest_object([x,y],real_data_bis,indices_associated_bis)
+
+        
+        # real objcet index. 
+        association_index = None
+
+        # sidewalk for pedestrian association 
+        sidewalk_to_consider = None
+
+        #if a perfect object is associated to both real_data and real_data_bis we
+        # decide to associate it to real_data object
+        if min_index is None and min_index_bis != None:
+            association_index = min_index_bis
+            sidewalk_to_consider = sidewalk_bis
+            indices_associated_bis.append(min_index_bis)
+        elif min_index != None:
+            association_index = min_index
+            sidewalk_to_consider = sidewalk
+            indices_associated.append(min_index)
+
+        # if an association is found
+        if association_index is not None: 
+            if not pedestrian:
+                data_to_consider.append(real_data[association_index])
+            else:
+                # if the detected pedestrian is one sidewalk and its speed is less than THRESHOLD_SPEED
+                # no association must be made
+                if not(sidewalk_to_consider[association_index] and d.get_speed()<THRESHOLD_SPEED):
+                    data_to_consider.append(real_data[association_index])
+    
+    return data_to_consider
+                    
+
+
 def exec_waypoint_nav_demo(args, host, port):
     """ Executes waypoint navigation demo.
     """
@@ -1250,54 +1321,7 @@ def exec_waypoint_nav_demo(args, host, port):
                         min_dist = math.inf
                     for pp_bis in wfp_bis: #from camera0bis"""
 
-def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidewalk=None, pedestrian=True):
-    THRESHOLD_DISTANCE = 2.5
-    if pedestrian:
-        THRESHOLD_SPEED = 0.15
 
-    indices_associated = []
-    data_to_consider = []
-    indices_associated_bis = []
-    
-    
-    for d in perfect_data:
-        x, y = d.get_position()
-        min_index_bis = None
-        min_index= None
-        for i, rd in enumerate(real_data): #from camera0
-            min_dist = math.inf
-            
-            x_point, y_point = rd[0][0], rd[1][0] # prendere i dati dagli attributi di world_frame
-            dist = np.subtract([x,y],[x_point, y_point])
-            norm = np.linalg.norm(dist)
-            if norm < min_dist and norm < THRESHOLD_DISTANCE and i not in indices_associated:
-                min_dist = norm
-                min_index = i
-
-        for i_bis, rd_bis in enumerate(real_data_bis): #from camera0bis
-            min_dist_bis = math.inf
-            
-            x_point_bis, y_point_bis = rd_bis[0][0], rd_bis[1][0]
-            dist_bis = np.subtract([x, y], [x_point_bis, y_point_bis])
-            norm_bis = np.linalg.norm(dist_bis)
-            if norm_bis < min_dist_bis and norm_bis < THRESHOLD_DISTANCE and i_bis not in indices_associated_bis:
-                min_dist_bis = norm_bis
-                min_index_bis = i_bis
-
-        if pedestrian == False: #per i veicoli
-            if min_dist < min_dist_bis and min_index!= None :
-                data_to_consider.append(real_data[min_index])
-            if min_dist > min_dist_bis and min_index_bis != None:
-                data_to_consider.append(real_data_bis[min_index_bis])
-        else: #per i pedoni
-            if sidewalk is not None :
-                if min_index != None and min_index_bis is not None
-                    if sidewalk[min_index] == True:
-                        real_speed =
-                        if min_dist < min_dist_bis and min_index!= None :
-                            data_to_consider.append(real_data[min_index])
-                        if min_dist > min_dist_bis and min_index_bis != None:
-                            data_to_consider.append(real_data_bis[min_index_bis])
 
 
 
