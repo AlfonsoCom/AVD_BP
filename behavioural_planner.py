@@ -14,8 +14,8 @@ STAY_STOPPED = 2
 
 STATES = ["FOLLOW_LANE","DECELERATE_TO_STOP","STAY_STOPPED"]
 
-
-COUNT_THRESHOLD = 7
+# to manage ghost objects
+COUNT_THRESHOLD = 2 #3
 
 # traffic light status
 GREEN = 0
@@ -177,6 +177,7 @@ class BehaviouralPlanner:
                     goal_index_car = car_stop
                 wp_speed = 0
                 self._state = DECELERATE_TO_STOP
+                ghost_count = 0
 
 
             ### check pedestrian intersection
@@ -194,6 +195,7 @@ class BehaviouralPlanner:
                     #goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 wp_speed = 0
                 self._state = DECELERATE_TO_STOP
+                ghost_count = 0
                        
             self._current_traffic_light = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,self._lookahead,looksideways_right=4.5)
             status = None
@@ -215,6 +217,7 @@ class BehaviouralPlanner:
                         goal_index_tl = get_stop_wp(waypoints,closest_index,goal_index,self._current_traffic_light[1:3])
                         wp_speed = 0
                         self._state = DECELERATE_TO_STOP
+                        ghost_count = 0
             
             goal_index = min(goal_index, goal_index_pd,goal_index_tl)
 
@@ -224,6 +227,8 @@ class BehaviouralPlanner:
 
         
         elif self._state == DECELERATE_TO_STOP:
+            
+            count += 1
 
             if abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED
@@ -287,8 +292,9 @@ class BehaviouralPlanner:
             # this condition is when the car has previusly detected a pedestrain on the road
             # and than this pedestrian goes out of road. 
             if not pedestrian_detected and not traffic_light_on_path and not car_collision_predicted:
-                    self._state = FOLLOW_LANE
-                    return
+                    if count >= COUNT_THRESHOLD:
+                        self._state = FOLLOW_LANE
+                        return
 
             # define goal index according the fact that a pedestrain could be located nearest to the car than
             # the traffic light or viceversa
@@ -328,9 +334,11 @@ class BehaviouralPlanner:
 
             # if no pedetrain and red traffic light are along car trajectory go to FOLLOW_LANE
             if not pedestrian_detected and not traffic_light_stop and not car_collision_predicted:
-                self._state = FOLLOW_LANE
-                # reset current traffic light status
-                self._current_traffic_light = []
+                if count >= COUNT_THRESHOLD:
+                    self._state = FOLLOW_LANE
+                    # reset current traffic light status
+                    self._current_traffic_light = []
+                    return
            
         else:
             raise ValueError('Invalid state value.')
