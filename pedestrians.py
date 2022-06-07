@@ -147,6 +147,7 @@ def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,
             pd_path = LineString([pd_start_point,pd_next_point])
             intersected = pd_path.intersects(car_path)
             if intersected:
+                print("\n[PEDESTRIANS] Pedestrian collision detected in position ", pd_start_point,"\n")
                 return intersected,closest_index
         start_point = next_point
 

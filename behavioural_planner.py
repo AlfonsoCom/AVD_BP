@@ -182,6 +182,9 @@ class BehaviouralPlanner:
             ### check pedestrian intersection
             # pedestrian_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
             #     self._pedestrians,lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
+            
+            print("[BP.follow_lane] -> check pedestrian output")
+            
             pedestrian_detected, car_stop = check_pedestrians2(ego_state[:2],ego_state[2],self._pedestrians,
             lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left,
                 waypoints=waypoints,closest_index=closest_index,goal_index=goal_index)
@@ -189,8 +192,8 @@ class BehaviouralPlanner:
                 
             self._pedestrian_detected = pedestrian_detected
             if pedestrian_detected:
-                if closed_loop_speed > STOP_THRESHOLD:
-                    goal_index_pd = car_stop
+                # if closed_loop_speed > STOP_THRESHOLD: # if we detected pedetrian collision the goal index to stop is the closest index 
+                goal_index_pd = car_stop
                     #goal_index_pd = get_stop_wp(waypoints,closest_index,goal_index,car_stop)
                 wp_speed = 0
                 self._state = DECELERATE_TO_STOP
@@ -261,6 +264,7 @@ class BehaviouralPlanner:
                 goal_index_car = car_stop
 
 
+            print("[BP.decelerate_to_stop] -> check pedestrian output")
             # pedestrian_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,self._pedestrians,lookahead=self._lookahead,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
             pedestrian_detected, car_stop = check_pedestrians2(ego_state[:2],ego_state[2],self._pedestrians,
             lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left,
@@ -268,6 +272,7 @@ class BehaviouralPlanner:
 
             self._pedestrian_detected = pedestrian_detected
 
+            
             
             if pedestrian_detected:
                 goal_index_pd = car_stop
@@ -286,6 +291,7 @@ class BehaviouralPlanner:
 
             # this condition is when the car has previusly detected a pedestrain on the road
             # and than this pedestrian goes out of road. 
+
             if not pedestrian_detected and not traffic_light_on_path and not car_collision_predicted:
                     self._state = FOLLOW_LANE
                     return

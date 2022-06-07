@@ -22,7 +22,7 @@ from math import sin, cos, pi, tan, sqrt
 from utils import compute_middle_point
 from vehicle import Agent
 from sidewalk import point_in_sidewalks
-from converter import Converter
+from converter1 import Converter
 
 import os
 
@@ -54,10 +54,10 @@ SIMULATION_PERFECT = True
 ###############################################################################
 PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 200#500     # total number of pedestrians to spawn
-NUM_VEHICLES           = 200#500        # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 1#0     # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 1#1     # seed for vehicle spawn randomizer
+NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
+NUM_VEHICLES           = 500        # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
+SEED_VEHICLES          = 1     # seed for vehicle spawn randomizer
 ###############################################################################
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -185,7 +185,7 @@ def rotate_z(angle):
     return R
 
 
-def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters, bis=False): 
+def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_z, current_yaw, camera_parameters, bis=False): 
     """
         Args: 
         - net: rete addestrata a fare object detection su immagini
@@ -260,18 +260,25 @@ def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_
     for vehicle in bb_v:
         middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
         middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
-        pixel = [middle_point[0], middle_point[1], 1]
+        #pixel = [middle_point[0], middle_point[1], 1]
+        pixel = [middle_point[0], middle_point[1]]
         pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-        world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
+        # world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
+        world_frame_point= converter.convert(pixel, pixel_depth, current_x, current_y,current_z,current_yaw)
+        
         world_frame_vehicles.append(world_frame_point)
 
     world_frame_pedestrians = [] #list of tuples of converted pixel in the world
     for pedestrian in bb_p:
         middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
         middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
-        pixel = [middle_point[0], middle_point[1], 1]
+        # pixel = [middle_point[0], middle_point[1], 1]
+        pixel = [middle_point[0], middle_point[1]]
+
         pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-        world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
+        # world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
+        world_frame_point= converter.convert(pixel, pixel_depth, current_x, current_y,current_z,current_yaw)
+        
         world_frame_pedestrians.append(world_frame_point)
     
     # # print("[EGO LOCATION]", current_x,current_y)
@@ -685,9 +692,9 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
             indices_associated.append(min_index)
 
 
-        # if not pedestrian:
-        #     camera_used = "BIS" if min_index_bis != None else "0"
-        #     print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose} to vehicle {d.get_position()}")
+        if not pedestrian:
+            camera_used = "BIS" if min_index_bis != None else "0"
+            print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose} to vehicle {d.get_position()}")
         # if an association is found
         if association_index is not None: 
             # pose = real_data[association_index]
@@ -1229,8 +1236,10 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 # print("-"*50)
 
-                world_frame_vehicles, world_frame_pedestrians,sidewalk = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters)
-                wfv_bis, wfp_bis, sidewalk_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_yaw, camera_parameters_bis, True)
+                world_frame_vehicles, world_frame_pedestrians,sidewalk = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_z, current_yaw, camera_parameters)
+                wfv_bis, wfp_bis, sidewalk_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_z,current_yaw, camera_parameters_bis, True)
+                # world_frame_vehicles, world_frame_pedestrians,sidewalk = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters)
+                # wfv_bis, wfp_bis, sidewalk_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_yaw, camera_parameters_bis, True)
 
                 # world_frame_vehicles += wfv_bis
                 # world_frame_pedestrians += wfp_bis
@@ -1357,7 +1366,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
 
                 #bp.transition_state(waypoints, ego_state, current_speed)
-                if True:
+                if False:
                     if WINDOWS_OS:
                         os.system("cls")
                     else:
