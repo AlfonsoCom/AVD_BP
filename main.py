@@ -621,13 +621,18 @@ def make_correction(waypoint,previuos_waypoint,desired_speed):
     return waypoint_on_lane
 
 
-def found_nearest_object(position,objects_position,objects_just_assoicated):
+def found_nearest_object(position,objects_position,objects_just_associated, pedestrian, vehicle_bis):
     """
         Given the list of objects position found the index of the object position
         nearest to the given position.
         All indices just used are provided in objects_just_associated list
     """
-    THRESHOLD_DISTANCE = 3
+    
+    THRESHOLD_DISTANCE = 4
+    #if vehicle_bis and  not pedestrian:
+        #THRESHOLD_DISTANCE = 3
+
+
     min_index = None
     min_dist = math.inf
 
@@ -637,7 +642,7 @@ def found_nearest_object(position,objects_position,objects_just_assoicated):
         dist = np.subtract(position,[x_point, y_point])
         norm = np.linalg.norm(dist)
         # an association is found
-        if norm < min_dist and norm < THRESHOLD_DISTANCE and i not in objects_just_assoicated:
+        if norm < min_dist and norm < THRESHOLD_DISTANCE and i not in objects_just_associated:
             # print("[NEAREST_FUNC] REALDATA ",x_point,y_point)
             # print("[NEAREST_FUNC] PERFECT DATA ",position,"\n")
             min_dist = norm
@@ -659,8 +664,11 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
         x, y = d.get_position()
         
         # print("Pedestrian: ", pedestrian)
-        min_index= found_nearest_object([x,y],real_data,indices_associated)
-        min_index_bis = found_nearest_object([x,y],real_data_bis,indices_associated_bis)
+        min_index= found_nearest_object([x,y],real_data,indices_associated, pedestrian, vehicle_bis=False)
+        print("\n\n")
+        print("min_index: ",min_index, "\n")
+
+        min_index_bis = found_nearest_object([x,y],real_data_bis,indices_associated_bis, pedestrian, vehicle_bis=True)
 
         
         # real objcet index. 
@@ -1227,19 +1235,21 @@ def exec_waypoint_nav_demo(args, host, port):
                 world_frame_vehicles, world_frame_pedestrians,sidewalk = find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_data, current_x, current_y, current_yaw, camera_parameters)
                 wfv_bis, wfp_bis, sidewalk_bis = find_pedestrians_and_vehicles_from_camera(net, camera_data_bis, seg_data_bis, depth_data_bis, current_x, current_y, current_yaw, camera_parameters_bis, True)
 
+                
+                
                 # world_frame_vehicles += wfv_bis
                 # world_frame_pedestrians += wfp_bis
 
-                # for p in world_frame_vehicles:
-                #     print("CAMERA 0 vehicles ", p)
+                for p in world_frame_vehicles:
+                    print("CAMERA 0 vehicles ", p.reshape(1, 3))
 
-                # print()
+                print()
 
 
-                # for p in wfv_bis:
-                #     print("CAMERA BIS vehicles ", p)
+                for p in wfv_bis:
+                   print("CAMERA BIS vehicles ", p.reshape(1, 3))
 
-                # print()
+                print()
 
                 ###############################################
                 
@@ -1286,7 +1296,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             bb = obstacle_to_world(location, dimensions, orientation)
                             #takes only verteces of pedestrians bb
                             bb = bb[0:-1:2]
-                            # print("REAL VEHICLE: ", location.x,location.y)
+                            print("REAL VEHICLE: ", location.x, location.y)
                             vehicle = Agent(id,[location.x,location.y],bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
                             # vehicles_dict[id] = vehicle 
@@ -1346,7 +1356,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
 
                 # bp.transition_state(waypoints, ego_state, current_speed)
-                if True:
+                if False:
                     if WINDOWS_OS:
                         os.system("cls")
                     else:
@@ -1394,6 +1404,8 @@ def exec_waypoint_nav_demo(args, host, port):
                         print(f"[T_LIG_POS]: (XXX.XX, XXX.XX)", end='\t')
                         print(f"[T_LIG_YAW]: X.XX deg", end='\t')
                         print(f"[T_LIG_STATUS]: X.XX m/s")
+
+                    
 
                 # Compute the goal state set from the behavioural planner's computed goal state.
                 goal_state_set = lp.get_goal_state_set(bp._goal_index, bp._goal_state, waypoints, ego_state)
