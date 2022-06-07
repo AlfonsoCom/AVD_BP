@@ -47,15 +47,17 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
+SIMULATION_PERFECT = True
+
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
 PLAYER_START_INDEX = 15  #20 #89 #148   #91        #  spawn index for player
 DESTINATION_INDEX = 139 #40# 133 #61   #142      # Setting a Destination HERE
-NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
-NUM_VEHICLES           = 500        # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 1     # seed for vehicle spawn randomizer
+NUM_PEDESTRIANS        = 200#500     # total number of pedestrians to spawn
+NUM_VEHICLES           = 200#500        # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 1#0     # seed for pedestrian spawn randomizer
+SEED_VEHICLES          = 1#1     # seed for vehicle spawn randomizer
 ###############################################################################
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -683,14 +685,15 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
             indices_associated.append(min_index)
 
 
-        if not pedestrian:
-                camera_used = "BIS" if min_index_bis != None else "0"
-                print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose} to vehicle {d.get_position()}")
+        # if not pedestrian:
+        #     camera_used = "BIS" if min_index_bis != None else "0"
+        #     print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose} to vehicle {d.get_position()}")
         # if an association is found
         if association_index is not None: 
             # pose = real_data[association_index]
-            # position = (pose[0],pose[1])
-            position = d.get_position()
+            position = (pose[0][0],pose[1][0])
+            # print("[MAIN] TEST line 693",type(position[0]),position[0],position[0][0])
+            #position = d.get_position()
             yaw = d.get_orientation()
             bb = d.get_bounding_box()
             speed = d.get_speed()
@@ -698,7 +701,8 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
             if not pedestrian:
                 vehicle = Agent(id,position,bb,yaw,speed,"Vehicle")
                 data_to_consider.append(vehicle)
-                vehicle_dict[id] = vehicle
+                if not SIMULATION_PERFECT:
+                    vehicle_dict[id] = vehicle
             else:
                 # if the detected pedestrian is one sidewalk and its speed is less than THRESHOLD_SPEED
                 # no association must be made
@@ -1154,7 +1158,8 @@ def exec_waypoint_nav_demo(args, host, port):
 
             # UPDATE HERE the obstacles list
             obstacles = []
-            vehicles_dict = {}
+
+            _vehicles_dict = {}
            
             # Update pose and timestamp
             prev_timestamp = current_timestamp
@@ -1289,7 +1294,8 @@ def exec_waypoint_nav_demo(args, host, port):
                             # print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,[location.x,location.y],bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
-                            # vehicles_dict[id] = vehicle 
+                            if SIMULATION_PERFECT:
+                                _vehicles_dict[id] = vehicle 
 
                 #########################################
                 # here make data association (remember to valuate it only on x and y)
@@ -1303,11 +1309,16 @@ def exec_waypoint_nav_demo(args, host, port):
                 vehicles_to_consider, vehicles_dict = association_vehicle_pedestrian(vehicles,
                 world_frame_vehicles,wfv_bis)
 
+                if SIMULATION_PERFECT:
+                    vehicles_dict = _vehicles_dict
 
-                pedestrians = np.array(pedestrians_to_consider)
-                vehicles = np.array(vehicles_to_consider)
-                # pedestrians = np.array(pedestrians,dtype=object)
-                # vehicles = np.array(vehicles)
+
+                if not SIMULATION_PERFECT:
+                    pedestrians = np.array(pedestrians_to_consider)
+                    vehicles = np.array(vehicles_to_consider)
+                else:
+                    pedestrians = np.array(pedestrians,dtype=object)
+                    vehicles = np.array(vehicles)
 
                 # set current info about traffic light (status), pedestrian and vehicle 
                 bp.set_tl_dict(tl_dict)
@@ -1345,7 +1356,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
 
 
-                # bp.transition_state(waypoints, ego_state, current_speed)
+                #bp.transition_state(waypoints, ego_state, current_speed)
                 if True:
                     if WINDOWS_OS:
                         os.system("cls")
