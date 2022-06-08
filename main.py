@@ -20,7 +20,7 @@ import behavioural_planner
 import cv2
 from math import sin, cos, pi, tan, sqrt
 from utils import compute_middle_point
-from vehicle import Agent
+from agents import Agent
 from sidewalk import point_in_sidewalks
 from converter1 import Converter
 
@@ -694,7 +694,7 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
 
         if not pedestrian:
             camera_used = "BIS" if min_index_bis != None else "0"
-            print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose} to vehicle {d.get_position()}")
+            # print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose} to vehicle {d.get_position()}")
         # if an association is found
         if association_index is not None: 
             # pose = real_data[association_index]
@@ -1366,7 +1366,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
 
                 #bp.transition_state(waypoints, ego_state, current_speed)
-                if False:
+                if True:
                     if WINDOWS_OS:
                         os.system("cls")
                     else:

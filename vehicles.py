@@ -149,7 +149,7 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
             v_path = LineString([v_start_point,v_next_point])
             intersected = v_path.intersects(car_path)
             if intersected:
-                return intersected,closest_index
+                return intersected,index # return the greatest index between two consecutive indices where the collision is detected
         start_point = next_point
 
     return intersected,index

@@ -4,7 +4,7 @@ from utils import *
 from shapely.geometry import Point, Polygon, LineString
 
 # Stop speed threshold
-STOP_THRESHOLD = 0.5
+STOP_THRESHOLD = 0.3
 # value to add to CAR ROI 
 CAR_LATERAL_MARGIN = 0.5
 
@@ -147,8 +147,7 @@ def check_pedestrians2(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,
             pd_path = LineString([pd_start_point,pd_next_point])
             intersected = pd_path.intersects(car_path)
             if intersected:
-                print("\n[PEDESTRIANS] Pedestrian collision detected in position ", pd_start_point,"\n")
-                return intersected,closest_index
+                return intersected,index
         start_point = next_point
 
     return intersected,index
