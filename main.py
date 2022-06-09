@@ -1678,8 +1678,8 @@ def main():
     if not args.local:
         host = SERVER_HOST; port = SERVER_PORT
     else:
-        #host = LOCAL_HOST; port = LOCAL_PORT
-        host = "192.168.1.128"; port = 2000
+        host = LOCAL_HOST; port = LOCAL_PORT
+        #host = "192.168.1.128"; port = 2000
     
     logging.info('listening to server %s:%s', host, port)
 
