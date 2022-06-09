@@ -774,7 +774,7 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
         if not check_entering_condition:
             del entering[id]
 
-    return agents_to_consider
+    return agents_to_consider, entering
 
 def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_dict=None):
     agents_to_consider = []
@@ -814,7 +814,7 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
             del outgoing[id] # if MAX_GHOST_FRAME are passed 
 
 
-    return agents_to_consider
+    return agents_to_consider, outgoing
 
 def exec_waypoint_nav_demo(args, host, port):
     """ Executes waypoint navigation demo.
@@ -1445,8 +1445,9 @@ def exec_waypoint_nav_demo(args, host, port):
                     print(str(agent[1]), "for", agent[0], "times")
 
                 ########    entering  management 
-                output_p = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
-                output_v = agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
+                output_p, entering = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
+                output_v, entering_v = agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
+                entering.update(entering_v)
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
@@ -1463,8 +1464,9 @@ def exec_waypoint_nav_demo(args, host, port):
                 for agent in outgoing.values():
                     print(str(agent[1]), "for", agent[0], "times")
 
-                output_p = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
-                output_v = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
+                output_p, outgoing = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
+                output_v, outgoing_v = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
+                outgoing.update(outgoing_v)
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
