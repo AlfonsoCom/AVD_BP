@@ -1442,7 +1442,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 print("entering prima")
                 
                 for agent in entering.values():
-                    print(str(agent))
+                    print(str(agent[1]), "for", agent[0], "times")
 
                 ########    entering  management 
                 output_p = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
@@ -1456,12 +1456,12 @@ def exec_waypoint_nav_demo(args, host, port):
                 print("\nentering dopo")
 
                 for agent in entering.values():
-                    print(str(agent))
+                    print(str(agent[1]), "for", agent[0], "times")
 
                 ####### outgoing management
                 print("outgoing prima")
                 for agent in outgoing.values():
-                    print(str(agent))
+                    print(str(agent[1]), "for", agent[0], "times")
 
                 output_p = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
                 output_v = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
@@ -1470,9 +1470,9 @@ def exec_waypoint_nav_demo(args, host, port):
                 vehicles_to_consider += output_v
                 print("AGENT_TO_CONSIDER dopo outgoing",len(pedestrians_to_consider), len(vehicles_to_consider))
                 
-                print("outgoing prima")
+                print("outgoing dopo")
                 for agent in outgoing.values():
-                    print(str(agent))
+                    print(str(agent[1]), "for", agent[0], "times")
 
                 last_frame_agents = pedestrians_to_consider+vehicles_to_consider               
                 #######
