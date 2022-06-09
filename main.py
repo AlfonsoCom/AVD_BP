@@ -1445,9 +1445,10 @@ def exec_waypoint_nav_demo(args, host, port):
                     print(str(agent[1]), "for", agent[0], "times")
 
                 ########    entering  management 
-                output_p, entering = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
+                output_p, entering_p = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
                 output_v, entering_v = agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
-                entering.update(entering_v)
+                entering_p.update(entering_v)
+                entering = entering_p
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
@@ -1464,9 +1465,10 @@ def exec_waypoint_nav_demo(args, host, port):
                 for agent in outgoing.values():
                     print(str(agent[1]), "for", agent[0], "times")
 
-                output_p, outgoing = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
+                output_p, outgoing_p = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
                 output_v, outgoing_v = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
-                outgoing.update(outgoing_v)
+                outgoing_p.update(outgoing_v)
+                outgoing = outgoing_p
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
