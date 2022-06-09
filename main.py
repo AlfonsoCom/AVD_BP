@@ -748,6 +748,9 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
             else:
                 entering[id] = [1,current_agent]
 
+    print("ENTERING INSIDE FUNCTION")
+    print(entering)
+
     # STEP 2: for each entering object check if enough frame have passed from entering condition 
 
     entering_ids = list(entering.keys())
@@ -773,9 +776,6 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
         
         if not check_entering_condition:
             del entering[id]
-
-    print("ENTERING INSIDE FUNCTION")
-    print(entering)
 
     return agents_to_consider, entering, vehicles_dict
 
