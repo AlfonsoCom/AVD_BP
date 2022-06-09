@@ -1477,7 +1477,8 @@ def exec_waypoint_nav_demo(args, host, port):
                 for agent in outgoing.values():
                     print(str(agent[1]), "for", agent[0], "times")
 
-                last_frame_agents = pedestrians_to_consider+vehicles_to_consider               
+                #last_frame_agents = pedestrians_to_consider+vehicles_to_consider               
+                last_frame_agents = vehicles_associated + pedestrian_associated
                 #######
 
                 if SIMULATION_PERFECT:
