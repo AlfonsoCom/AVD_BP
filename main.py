@@ -739,9 +739,9 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
                     vehicles_dict[id] = current_agent
                 break 
 
-        # if a match between the current and last frame is not check_existing 
+        # if a match between the current and last frame is check_existing 
         #  so it is an entering object 
-        if not check_existing:
+        if check_existing:
             if id in entering:
                 entering[id][0]+=1
                 entering[id][1] = current_agent # update location and speed 
