@@ -794,7 +794,7 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
             if id in outgoing:
                 outgoing[id][0]+=1
             else:
-                outgoing[id][0]=1
+                outgoing[id] = [1, last_agent]
         # delete agents that are not ghost yet 
         else: 
             del outgoing[id]
@@ -805,7 +805,7 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
     ids_ghost = list(outgoing.keys())
 
     for id in ids_ghost:
-        if outgoing[id] < MAX_GHOST_FRAME:
+        if outgoing[id][0] < MAX_GHOST_FRAME:
             agent = outgoing[id][1]
             agents_to_consider.append(agent)
             if vehicle_dict is not None:
