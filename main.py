@@ -1450,11 +1450,11 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 print("dopo entering",len(pedestrians_to_consider), len(vehicles_to_consider))
                 
-                print("PEDESTRIANS TO CONSIDER")
+                print("PEDESTRIANS TO CONSIDER (dopo entering)")
                 for p in pedestrians_to_consider:
                     print(str(p))
                 
-                print("VEHICLES TO CONSIDER")
+                print("VEHICLES TO CONSIDER (dopo entering)")
                 for v in vehicles_to_consider:
                     print(str(v))
 
@@ -1467,6 +1467,13 @@ def exec_waypoint_nav_demo(args, host, port):
                 vehicles_to_consider += output_v
                 print("dopo outgoing",len(pedestrians_to_consider), len(vehicles_to_consider))
                 
+                print("PEDESTRIANS TO CONSIDER (dopo outgoing)")
+                for p in pedestrians_to_consider:
+                    print(str(p))
+                
+                print("VEHICLES TO CONSIDER (dopo outgoing)")
+                for v in vehicles_to_consider:
+                    print(str(v))
                 
                 last_frame_agents = pedestrians_to_consider+vehicles_to_consider
                 print("\nentering dopo")
