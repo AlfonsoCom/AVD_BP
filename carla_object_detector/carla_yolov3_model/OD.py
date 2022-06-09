@@ -13,7 +13,10 @@ from .config import *
 # VEHICLE_TAG = "vehicle"
 # PERSON_TAG = "person"
 
-YOLO_V4 = True
+YOLO_V3 = False
+YOLO_V4 = False
+YOLO_V5 = True
+
 file_path = os.path.dirname(__file__)
 
 # load names of classes and turn that into a list
@@ -26,22 +29,23 @@ with open(classesFile,'rt') as f:
     classes = f.read().rstrip('\n').split('\n')
 
 # # model configuration
-if not YOLO_V4:
+if YOLO_V3:
     # https://github.com/aoruize/carla-yolov3-model
     modelConf = os.path.join(file_path,'yolov3.cfg')
     modelWeights = os.path.join(file_path,'yolov3.weights')
-else:
+elif YOLO_V4:
     # https://github.com/AnuragGupta806/Carla-Autonomous-Vehicle
     modelConf = os.path.join(file_path,'yolov4.cfg')
     modelWeights = os.path.join(file_path,'yolov4.weights')
+elif YOLO_V5:
+    modelWeights = os.path.join(file_path, "yolov5s.onnx")
 
 def load_model():
     # set up the net
-    if YOLO_V4:
+    if YOLO_V3 or YOLO_V4:
         net = cv.dnn.readNetFromDarknet(modelConf, modelWeights)
-        # net = cv.dnn.readNet(modelConf, modelWeights)
     else:
-        net = cv.dnn.readNetFromDarknet(modelConf, modelWeights)
+        net = cv.dnn.readNet(modelWeights)
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
     net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
 
