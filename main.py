@@ -47,7 +47,7 @@ SERVER_PORT = 6018
 LOCAL_HOST = "localhost"
 LOCAL_PORT = 2000
 
-SIMULATION_PERFECT = True
+SIMULATION_PERFECT = False
 
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
@@ -692,9 +692,9 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
             indices_associated.append(min_index)
 
 
-        if not pedestrian:
-            camera_used = "BIS" if min_index_bis != None else "0"
-            # print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose} to vehicle {d.get_position()}")
+        # if not pedestrian and (min_index != None or min_index_bis != None):
+        #     camera_used = "BIS" if min_index_bis != None else "0"
+        #     print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose.reshape(1,3)[:2]} to vehicle {d.get_position()}")
         # if an association is found
         if association_index is not None: 
             # pose = real_data[association_index]
@@ -719,7 +719,102 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
     
     return data_to_consider, vehicle_dict
                     
+def agent_entering_management(current_agents,last_agents, entering,vehicles_dict = None):
+    agents_to_consider = []
+    MIN_ENTERING_FRAME = 2
+    # entering pedestrian
 
+    # STEP 1: update entering objects
+    for current_agent in current_agents: # from each pedestrian in current frame
+        id = current_agent.get_id()
+        # this boolean var check if a pedestrain is just detected in the scene
+        # if in next iteration it is not updated to True means that this object is 
+        # an entering object
+        check_existing = False
+        for last_agent in last_agents:
+            if id == last_agent.get_id(): # check if it just detected in the last frame
+                check_existing = True
+                agents_to_consider.append(current_agent)
+                if vehicles_dict is not None:
+                    vehicles_dict[id] = current_agent
+                break 
+
+        # if a match between the current and last frame is not check_existing 
+        #  so it is an entering object 
+        if not check_existing:
+            if id in entering:
+                entering[id][0]+=1
+                entering[id][1] = current_agent # update location and speed 
+            else:
+                entering[id] = [1,current_agent]
+
+    # STEP 2: for each entering object check if enough frame have passed from entering condition 
+
+    entering_ids = list(entering.keys())
+    for id in entering_ids:
+        counter = entering[id][0]
+        if counter == MIN_ENTERING_FRAME:
+            agents_to_consider.append(current_agent)
+            if vehicles_dict is not None:
+                vehicles_dict[id] = current_agent
+            # there is no needed to flag this object as entering object becouse now it is a real object
+            del entering[id]
+
+    # STEP 3: delete all entering object that are not are detected in the current frame 
+    # thats means that they were FALSE POSITIVE objects
+
+    for id in entering_ids:
+        # flag to detect wich object can maintains the entering conditions
+        check_entering_condition = False
+        for current_agent in current_agents:
+            if id == current_agent.get_id():
+                check_entering_condition = True
+                break
+        
+        if not check_entering_condition:
+            del entering[id]
+
+    return agents_to_consider
+
+def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_dict=None):
+    agents_to_consider = []
+    MAX_GHOST_FRAME = 5
+
+    # STEP 1: update ghost object
+    for last_agent in last_agents:
+        id = last_agent.get_id()
+        check_ghost = True
+        for current_agent in current_agents:
+            if id == current_agent.get_id():
+                check_ghost = False
+                break
+
+        # update number of frame where this object is a ghost
+        if check_ghost:
+            if id in outgoing:
+                outgoing[id][0]+=1
+            else:
+                outgoing[id][0]=1
+        # delete agents that are not ghost yet 
+        else: 
+            del outgoing[id]
+
+    
+    # STEP 2: check which object should be delete from ghost condition
+
+    ids_ghost = list(outgoing.keys())
+
+    for id in ids_ghost:
+        if outgoing[id] < MAX_GHOST_FRAME:
+            agent = outgoing[id][1]
+            agents_to_consider.append(agent)
+            if vehicle_dict is not None:
+                vehicle_dict[id]=agent
+        else:
+            del outgoing[id] # if MAX_GHOST_FRAME are passed 
+
+
+    return agents_to_consider
 
 def exec_waypoint_nav_demo(args, host, port):
     """ Executes waypoint navigation demo.
@@ -961,10 +1056,10 @@ def exec_waypoint_nav_demo(args, host, port):
         
 
         waypoints = np.array(waypoints)
-        print("[MAIN] n waypoints -> ", len(waypoints))
-        with open("waypoints.txt","w") as f:
-            for x,y,v in waypoints:
-                f.writelines(f"{x}, {y}, {v}\n")
+        # print("[MAIN] n waypoints -> ", len(waypoints))
+        # with open("waypoints.txt","w") as f:
+        #     for x,y,v in waypoints:
+        #         f.writelines(f"{x}, {y}, {v}\n")
 
         #############################################
         # Controller 2D Class Declaration
@@ -1152,6 +1247,21 @@ def exec_waypoint_nav_demo(args, host, port):
 
 
         # vehicles_dict = {}
+        ####################################
+        entering = {}
+        outgoing = {}
+
+        # the aboves data structure are structured in this way:
+        # entering = {
+        #          id1: [counter, agent_object],
+        #          id2: [counter, agent_object],
+        #          ....
+        #          }
+        #
+    
+        # list of last frame ids  
+        last_frame_agents = []
+
 
     
         ###################################
@@ -1303,8 +1413,12 @@ def exec_waypoint_nav_demo(args, host, port):
                             # print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,[location.x,location.y],bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
+                            if id in outgoing:
+                                # update its data because in the current frame this object can be still occludeed 
+                                outgoing[id][1] = vehicle
                             if SIMULATION_PERFECT:
                                 _vehicles_dict[id] = vehicle 
+                            
 
                 #########################################
                 # here make data association (remember to valuate it only on x and y)
@@ -1312,11 +1426,47 @@ def exec_waypoint_nav_demo(args, host, port):
                 # output-> np array di pedoni
 
                 
-                pedestrians_to_consider,_ = association_vehicle_pedestrian(pedestrians,
+                pedestrian_associated,_ = association_vehicle_pedestrian(pedestrians,
                 world_frame_pedestrians,wfp_bis,sidewalk,sidewalk_bis,True)
 
-                vehicles_to_consider, vehicles_dict = association_vehicle_pedestrian(vehicles,
+                vehicles_associated, vehicles_dict = association_vehicle_pedestrian(vehicles,
                 world_frame_vehicles,wfv_bis)
+
+
+                # pedestrians_to_consider = pedestrian_associated
+                # vehicles_to_consider = vehicles_associated
+
+                pedestrians_to_consider = []
+                vehicles_to_consider = []
+
+                print("entering prima")
+                print(entering)
+                ########    entering  management 
+                pedestrians_to_consider += agent_entering_management(pedestrian_associated,last_frame_agents,entering)
+                vehicles_to_consider += agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
+
+                print("dopo entering",len(pedestrians_to_consider), len(vehicles_to_consider))
+                for p in pedestrians_to_consider:
+                    print(p)
+                
+                for v in vehicles_to_consider:
+                    print(v)
+
+
+                ####### outgoing management
+
+                pedestrians_to_consider += agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
+                vehicles_to_consider += agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
+                print("dopo outgoing",len(pedestrians_to_consider), len(vehicles_to_consider))
+                
+                
+                last_frame_agents = pedestrians_to_consider+vehicles_to_consider
+                print("\nentering dopo")
+
+                print(entering)
+
+               
+                #######
 
                 if SIMULATION_PERFECT:
                     vehicles_dict = _vehicles_dict
@@ -1341,7 +1491,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 cv2.imshow("CameraRGB", camera_data)
                 cv2.waitKey(10)
 
- 
+
 
 
                 
@@ -1366,7 +1516,7 @@ def exec_waypoint_nav_demo(args, host, port):
 
 
                 #bp.transition_state(waypoints, ego_state, current_speed)
-                if True:
+                if False:
                     if WINDOWS_OS:
                         os.system("cls")
                     else:
