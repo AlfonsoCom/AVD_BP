@@ -800,7 +800,8 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
                 outgoing[id] = [1, last_agent]
         # delete agents that are not ghost yet 
         else: 
-            del outgoing[id]
+            if id in outgoing:
+                del outgoing[id]
 
     
     # STEP 2: check which object should be delete from ghost condition
