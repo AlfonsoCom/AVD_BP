@@ -1442,8 +1442,11 @@ def exec_waypoint_nav_demo(args, host, port):
                 print("entering prima")
                 print(entering)
                 ########    entering  management 
-                pedestrians_to_consider += agent_entering_management(pedestrian_associated,last_frame_agents,entering)
-                vehicles_to_consider += agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
+                output_p = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
+                output_v = agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
+
+                pedestrians_to_consider += output_p
+                vehicles_to_consider += output_v
 
                 print("dopo entering",len(pedestrians_to_consider), len(vehicles_to_consider))
                 
@@ -1457,9 +1460,11 @@ def exec_waypoint_nav_demo(args, host, port):
 
 
                 ####### outgoing management
+                output_p = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
+                output_v = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
 
-                pedestrians_to_consider += agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
-                vehicles_to_consider += agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
+                pedestrians_to_consider += output_p
+                vehicles_to_consider += output_v
                 print("dopo outgoing",len(pedestrians_to_consider), len(vehicles_to_consider))
                 
                 
