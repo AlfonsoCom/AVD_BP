@@ -1440,7 +1440,10 @@ def exec_waypoint_nav_demo(args, host, port):
                 vehicles_to_consider = []
 
                 print("entering prima")
-                print(entering)
+                
+                for agent in entering.values():
+                    print(str(agent))
+
                 ########    entering  management 
                 output_p = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
                 output_v = agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
@@ -1448,39 +1451,30 @@ def exec_waypoint_nav_demo(args, host, port):
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
 
-                print("dopo entering",len(pedestrians_to_consider), len(vehicles_to_consider))
+                print("AGENT_TO_CONSIDER dopo entering",len(pedestrians_to_consider), len(vehicles_to_consider))
                 
-                print("PEDESTRIANS TO CONSIDER (dopo entering)")
-                for p in pedestrians_to_consider:
-                    print(str(p))
-                
-                print("VEHICLES TO CONSIDER (dopo entering)")
-                for v in vehicles_to_consider:
-                    print(str(v))
+                print("\nentering dopo")
 
+                for agent in entering.values():
+                    print(str(agent))
 
                 ####### outgoing management
+                print("outgoing prima")
+                for agent in outgoing.values():
+                    print(str(agent))
+
                 output_p = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
                 output_v = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
-                print("dopo outgoing",len(pedestrians_to_consider), len(vehicles_to_consider))
+                print("AGENT_TO_CONSIDER dopo outgoing",len(pedestrians_to_consider), len(vehicles_to_consider))
                 
-                print("PEDESTRIANS TO CONSIDER (dopo outgoing)")
-                for p in pedestrians_to_consider:
-                    print(str(p))
-                
-                print("VEHICLES TO CONSIDER (dopo outgoing)")
-                for v in vehicles_to_consider:
-                    print(str(v))
-                
-                last_frame_agents = pedestrians_to_consider+vehicles_to_consider
-                print("\nentering dopo")
+                print("outgoing prima")
+                for agent in outgoing.values():
+                    print(str(agent))
 
-                print(entering)
-
-               
+                last_frame_agents = pedestrians_to_consider+vehicles_to_consider               
                 #######
 
                 if SIMULATION_PERFECT:
