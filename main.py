@@ -1446,11 +1446,14 @@ def exec_waypoint_nav_demo(args, host, port):
                 vehicles_to_consider += agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
 
                 print("dopo entering",len(pedestrians_to_consider), len(vehicles_to_consider))
-                for p in pedestrians_to_consider:
-                    print(p)
                 
+                print("PEDESTRIANS TO CONSIDER")
+                for p in pedestrians_to_consider:
+                    print(str(p))
+                
+                print("VEHICLES TO CONSIDER")
                 for v in vehicles_to_consider:
-                    print(v)
+                    print(str(v))
 
 
                 ####### outgoing management
