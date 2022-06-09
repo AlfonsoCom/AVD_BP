@@ -15,7 +15,8 @@ from .config import *
 
 YOLO_V3 = False
 YOLO_V4 = False
-YOLO_V5 = True
+YOLO_V4_P6 = True
+YOLO_V5 = False
 
 file_path = os.path.dirname(__file__)
 
@@ -37,15 +38,20 @@ elif YOLO_V4:
     # https://github.com/AnuragGupta806/Carla-Autonomous-Vehicle
     modelConf = os.path.join(file_path,'yolov4.cfg')
     modelWeights = os.path.join(file_path,'yolov4.weights')
+elif YOLO_V4_P6:
+    # https://github.com/AlexeyAB/darknet#pre-trained-models
+    modelConf = os.path.join(file_path, 'yolov4-p6.cfg')
+    modelWeights = os.path.join(file_path,'yolov4-p6.weights')
 elif YOLO_V5:
+    # https://colab.research.google.com/github/spmallick/learnopencv/blob/master/Object-Detection-using-YOLOv5-and-OpenCV-DNN-in-CPP-and-Python/Convert_PyTorch_models.ipynb?authuser=1#scrollTo=ITUKhgc2P4T6
     modelWeights = os.path.join(file_path, "yolov5s.onnx")
 
 def load_model():
     # set up the net
-    if YOLO_V3 or YOLO_V4:
+    if not YOLO_V5:
         net = cv.dnn.readNetFromDarknet(modelConf, modelWeights)
     else:
-        net = cv.dnn.readNet(modelWeights)
+        net = cv.dnn.readNetFromONNX(modelWeights)
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
     net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
 
@@ -137,7 +143,10 @@ def predict(net,frame):
    
     # set the net
     net.setInput(blob)
-    outs = net.forward(getOutputsNames(net))
+    if not YOLO_V5:
+        outs = net.forward(getOutputsNames(net))
+    else:
+        outs = net.forward(net.getUnconnectedOutLayersNames())
     return outs
 
 
