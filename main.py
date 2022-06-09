@@ -757,7 +757,7 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
             agents_to_consider.append(current_agent)
             if vehicles_dict is not None:
                 vehicles_dict[id] = current_agent
-            # there is no needed to flag this object as entering object becouse now it is a real object
+            # there is no need to flag this object as entering object because now it is a real object
             del entering[id]
 
     # STEP 3: delete all entering object that are not are detected in the current frame 
@@ -774,7 +774,7 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
         if not check_entering_condition:
             del entering[id]
 
-    return agents_to_consider, entering
+    return agents_to_consider, entering, vehicles_dict
 
 def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_dict=None):
     agents_to_consider = []
@@ -814,7 +814,7 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
             del outgoing[id] # if MAX_GHOST_FRAME are passed 
 
 
-    return agents_to_consider, outgoing
+    return agents_to_consider, outgoing, vehicle_dict
 
 def exec_waypoint_nav_demo(args, host, port):
     """ Executes waypoint navigation demo.
@@ -1445,10 +1445,8 @@ def exec_waypoint_nav_demo(args, host, port):
                     print(str(agent[1]), "for", agent[0], "times")
 
                 ########    entering  management 
-                output_p, entering_p = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
-                output_v, entering_v = agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
-                entering_p.update(entering_v)
-                entering = entering_p
+                output_p, entering, _ = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
+                output_v, entering, vehicles_dict = agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
@@ -1465,10 +1463,8 @@ def exec_waypoint_nav_demo(args, host, port):
                 for agent in outgoing.values():
                     print(str(agent[1]), "for", agent[0], "times")
 
-                output_p, outgoing_p = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
-                output_v, outgoing_v = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
-                outgoing_p.update(outgoing_v)
-                outgoing = outgoing_p
+                output_p, outgoing, _ = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
+                output_v, outgoing, vehicles_dict = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
