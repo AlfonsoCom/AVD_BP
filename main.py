@@ -1515,7 +1515,6 @@ def exec_waypoint_nav_demo(args, host, port):
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
 
 
-                #bp.transition_state(waypoints, ego_state, current_speed)
                 if False:
                     if WINDOWS_OS:
                         os.system("cls")
@@ -1564,6 +1563,8 @@ def exec_waypoint_nav_demo(args, host, port):
                         print(f"[T_LIG_POS]: (XXX.XX, XXX.XX)", end='\t')
                         print(f"[T_LIG_YAW]: X.XX deg", end='\t')
                         print(f"[T_LIG_STATUS]: X.XX m/s")
+                else:
+                    bp.transition_state(waypoints, ego_state, current_speed)
 
                 # Compute the goal state set from the behavioural planner's computed goal state.
                 goal_state_set = lp.get_goal_state_set(bp._goal_index, bp._goal_state, waypoints, ego_state)
