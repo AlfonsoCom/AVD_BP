@@ -741,16 +741,15 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
 
         # if a match between the current and last frame is check_existing 
         #  so it is an entering object 
-        if check_existing:
+        if not check_existing:
             if id in entering:
                 entering[id][0]+=1
                 entering[id][1] = current_agent # update location and speed 
             else:
+                # print(f"\n[INFUNC] insert  {current_agent._type} {id}\n")
                 entering[id] = [1,current_agent]
 
-    print("ENTERING INSIDE FUNCTION")
-    print(entering)
-
+  
     # STEP 2: for each entering object check if enough frame have passed from entering condition 
 
     entering_ids = list(entering.keys())
@@ -777,7 +776,7 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
         if not check_entering_condition:
             del entering[id]
 
-    return agents_to_consider, entering, vehicles_dict
+    return agents_to_consider
 
 def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_dict=None):
     agents_to_consider = []
@@ -818,7 +817,7 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
             del outgoing[id] # if MAX_GHOST_FRAME are passed 
 
 
-    return agents_to_consider, outgoing, vehicle_dict
+    return agents_to_consider
 
 def exec_waypoint_nav_demo(args, host, port):
     """ Executes waypoint navigation demo.
@@ -1252,8 +1251,11 @@ def exec_waypoint_nav_demo(args, host, port):
 
         # vehicles_dict = {}
         ####################################
-        entering = {}
-        outgoing = {}
+        vehicles_entering = {}
+        pedestrians_entering = {}
+        pedestrians_outgoing= {}
+        vehicles_outgoing = {}
+
 
         # the aboves data structure are structured in this way:
         # entering = {
@@ -1264,7 +1266,8 @@ def exec_waypoint_nav_demo(args, host, port):
         #
     
         # list of last frame ids  
-        last_frame_agents = []
+        pedestrians_last_frame = []
+        vehicles_last_frame = []
 
 
     
@@ -1417,9 +1420,9 @@ def exec_waypoint_nav_demo(args, host, port):
                             # print("REAL VEHICLE: ", location.x,location.y)
                             vehicle = Agent(id,[location.x,location.y],bb,orientation.yaw,speed,"Vehicle")
                             vehicles.append(vehicle)
-                            if id in outgoing:
+                            if id in vehicles_outgoing:
                                 # update its data because in the current frame this object can be still occludeed 
-                                outgoing[id][1] = vehicle
+                                vehicles_outgoing[id][1] = vehicle
                             if SIMULATION_PERFECT:
                                 _vehicles_dict[id] = vehicle 
                             
@@ -1443,43 +1446,35 @@ def exec_waypoint_nav_demo(args, host, port):
                 pedestrians_to_consider = []
                 vehicles_to_consider = []
 
-                print("entering prima")
-                
-                for agent in entering.values():
-                    print(str(agent[1]), "for", agent[0], "times")
-
                 ########    entering  management 
-                output_p, entering, _ = agent_entering_management(pedestrian_associated,last_frame_agents,entering)
-                output_v, entering, vehicles_dict = agent_entering_management(vehicles_associated,last_frame_agents,entering,vehicles_dict)
+                output_p = agent_entering_management(pedestrian_associated,pedestrians_last_frame,pedestrians_entering)
+                
+                output_v = agent_entering_management(vehicles_associated,vehicles_last_frame,vehicles_entering,vehicles_dict)
+                pedestrians_to_consider += output_p
+                vehicles_to_consider += output_v
+                
+                print("pedestrians")
+                for p in pedestrians_to_consider:
+                    print(p)
+
+                print("vehicles")
+
+                for v in vehicles_to_consider:
+                    print(v)   
+
+                print("-"*50)
+
+                output_p = agents_outgoing_managements(pedestrian_associated,pedestrians_last_frame,pedestrians_outgoing)
+                output_v = agents_outgoing_managements(vehicles_associated,vehicles_last_frame,vehicles_outgoing,vehicles_dict)
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
-
-                print("AGENT_TO_CONSIDER dopo entering",len(pedestrians_to_consider), len(vehicles_to_consider))
                 
-                print("\nentering dopo")
-
-                for agent in entering.values():
-                    print(str(agent[1]), "for", agent[0], "times")
-
-                ####### outgoing management
-                print("outgoing prima")
-                for agent in outgoing.values():
-                    print(str(agent[1]), "for", agent[0], "times")
-
-                output_p, outgoing, _ = agents_outgoing_managements(pedestrian_associated,last_frame_agents,outgoing)
-                output_v, outgoing, vehicles_dict = agents_outgoing_managements(vehicles_associated,last_frame_agents,outgoing,vehicles_dict)
-
-                pedestrians_to_consider += output_p
-                vehicles_to_consider += output_v
-                print("AGENT_TO_CONSIDER dopo outgoing",len(pedestrians_to_consider), len(vehicles_to_consider))
+                print("after outgoing")
                 
-                print("outgoing dopo")
-                for agent in outgoing.values():
-                    print(str(agent[1]), "for", agent[0], "times")
-
-                #last_frame_agents = pedestrians_to_consider+vehicles_to_consider               
-                last_frame_agents = vehicles_associated + pedestrian_associated
+                pedestrians_last_frame = pedestrians_to_consider
+                vehicles_last_frame = vehicles_to_consider
+                # last_frame_agents = vehicles_associated + pedestrian_associated
                 #######
 
                 if SIMULATION_PERFECT:
