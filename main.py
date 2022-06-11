@@ -22,7 +22,7 @@ from math import sin, cos, pi, tan, sqrt
 from utils import compute_middle_point
 from agents import Agent
 from sidewalk import point_in_sidewalks
-from converter1 import Converter
+from converter import Converter
 
 import os
 
@@ -260,11 +260,9 @@ def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_
     for vehicle in bb_v:
         middle_point = compute_middle_point(vehicle[0][0], vehicle[0][1], vehicle[1], vehicle[2])
         middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
-        #pixel = [middle_point[0], middle_point[1], 1]
         pixel = [middle_point[0], middle_point[1]]
         pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-        # world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
-        world_frame_point= converter.convert(pixel, pixel_depth, current_x, current_y,current_z,current_yaw)
+        world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_z,current_yaw)
         
         world_frame_vehicles.append(world_frame_point)
 
@@ -272,27 +270,12 @@ def find_pedestrians_and_vehicles_from_camera(net, camera_data, seg_data, depth_
     for pedestrian in bb_p:
         middle_point = compute_middle_point(pedestrian[0][0], pedestrian[0][1], pedestrian[1], pedestrian[2])
         middle_point = (min(middle_point[0],camera_parameters['height']-1), min(middle_point[1], camera_parameters['width']-1))
-        # pixel = [middle_point[0], middle_point[1], 1]
         pixel = [middle_point[0], middle_point[1]]
 
         pixel_depth = depth_data[middle_point[1], middle_point[0]]*1000
-        # world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_yaw)
-        world_frame_point= converter.convert(pixel, pixel_depth, current_x, current_y,current_z,current_yaw)
+        world_frame_point= converter.convert_to_3D(pixel, pixel_depth, current_x, current_y,current_z,current_yaw)
         
         world_frame_pedestrians.append(world_frame_point)
-    
-    # # print("[EGO LOCATION]", current_x,current_y)
-    # # TESTING
-    # # print("[VEHICLES DETECTED FROM CAMERA]: ")
-    # if bis:
-    #     print("CAMERA_BIS")
-    # else:
-    #     print("CAMERA")
-    # for v in world_frame_vehicles:
-    #     print("[VEHICLES DETECTED FROM CAMERA]",v[0],v[1])
-    # for i,p in enumerate(world_frame_pedestrians):
-    #     print("[PEDESTRIANS DETECTED FROM CAMERA]",p[0],p[1],"sidewalk:", sidewalk[i])
-    #     #print(f"{p}, sidewalk: {sidewalk[i]}")
 
     return world_frame_vehicles, world_frame_pedestrians, sidewalk
 
@@ -642,19 +625,33 @@ def found_nearest_object(position,objects_position,objects_just_assoicated):
 
     for i, object_position in enumerate(objects_position): #from camera0
         x_point, y_point = object_position[0][0], object_position[1][0] # prendere i dati dagli attributi di world_frame
-        # print("NEAREST_FUNC ",x_point,y_point,"\n")
         dist = np.subtract(position,[x_point, y_point])
         norm = np.linalg.norm(dist)
         # an association is found
         if norm < min_dist and norm < THRESHOLD_DISTANCE and i not in objects_just_assoicated:
-            # print("[NEAREST_FUNC] REALDATA ",x_point,y_point)
-            # print("[NEAREST_FUNC] PERFECT DATA ",position,"\n")
             min_dist = norm
             min_index = i
     return min_index
 
 
 def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidewalk=None, sidewalk_bis = None, pedestrian=False):
+    """
+    Associates real data position to available perfect data agent. The real data are provided by two different cameras.
+
+    Args:
+        perfect_data (list): list of real agents
+        real_data  (np.ndarray): A 3x1 array with [x;y;z] provided by camera 0.
+        real_data_bis  (np.ndarray): A 3x1 array with [x;y;z] provided by camera bis.
+        sidewalk  (dict): dictionary where items are like (index:boolean). The keys regards to
+                          index of pedestrian in the real_data array and the values means that 
+                          this pedestrian is on sidewalk
+        sidewalk_bis (dict): dictionary where items are like (index:boolean). The keys regards to
+                          index of pedestrian in the real_data_bis array and the values means that 
+                          this pedestrian is on sidewalk
+        pedestrian (boolean): if true the data analyzed regargds to pedestrians otherwise vehicles.
+                             
+    """
+    
     # THRESHOLD_DISTANCE = 2.5
     THRESHOLD_SPEED = 0.15
 
@@ -667,7 +664,6 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
     for d in perfect_data:
         x, y = d.get_position()
         
-        # print("Pedestrian: ", pedestrian)
         min_index= found_nearest_object([x,y],real_data,indices_associated)
         min_index_bis = found_nearest_object([x,y],real_data_bis,indices_associated_bis)
 
@@ -692,14 +688,10 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
             indices_associated.append(min_index)
 
 
-        # if not pedestrian and (min_index != None or min_index_bis != None):
-        #     camera_used = "BIS" if min_index_bis != None else "0"
-        #     print(f"ASSOCIATED VEHICLES FROM CAMERA {camera_used}: {pose.reshape(1,3)[:2]} to vehicle {d.get_position()}")
-        # if an association is found
+       # if an association is found
         if association_index is not None: 
             # pose = real_data[association_index]
             position = (pose[0][0],pose[1][0])
-            # print("[MAIN] TEST line 693",type(position[0]),position[0],position[0][0])
             #position = d.get_position()
             yaw = d.get_orientation()
             bb = d.get_bounding_box()
@@ -757,7 +749,6 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
     for id in entering_ids:
         counter = entering[id][0]
         if counter == MIN_ENTERING_FRAME:
-            # print(f"[ENTERING FUNC] {id} is now an object")
 
             agents_to_consider.append( entering[id][1])
             if vehicles_dict is not None:
@@ -777,8 +768,6 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
                 break
         
         if not check_entering_condition:
-            # print(f"[ENTERING FUNC] {id} is lost is entering condistion")
-
             del entering[id]
 
     return agents_to_consider
@@ -803,12 +792,10 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
                 outgoing[id][0]+=1
             else:
                 outgoing[id] = [1, last_agent]
-            # print(f"[OUTGOING] {id} is a ghost, values {outgoing[id][0]}")
             
         # delete agents that are not ghost yet 
         else: 
             if id in outgoing:
-                # print(f"[OUTGOING] Delete ghost object it is seen in the current frame ")
                 del outgoing[id]
 
     
@@ -819,12 +806,10 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
     for id in ids_ghost:
         if outgoing[id][0] < MAX_GHOST_FRAME:
             agent = outgoing[id][1]
-            # print(f"[OUTGOING] {id} is still an object")
             agents_to_consider.append(agent)
             if vehicle_dict is not None:
                 vehicle_dict[id]=agent
         else:
-            # print(f"[OUTGOING] {id} is not an object")
             del outgoing[id] # if MAX_GHOST_FRAME are passed 
 
 
@@ -1070,10 +1055,7 @@ def exec_waypoint_nav_demo(args, host, port):
         
 
         waypoints = np.array(waypoints)
-        # print("[MAIN] n waypoints -> ", len(waypoints))
-        # with open("waypoints.txt","w") as f:
-        #     for x,y,v in waypoints:
-        #         f.writelines(f"{x}, {y}, {v}\n")
+
 
         #############################################
         # Controller 2D Class Declaration
@@ -1475,37 +1457,6 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
-
-                # print("FRAME: ",frame)
-
-                # print("ENTERING OBJECTS")
-                # for id in pedestrians_entering:
-                #     print(pedestrians_entering[id][0],pedestrians_entering[id][1])
-                
-                # for id in vehicles_entering:
-                #     print(vehicles_entering[id][0],vehicles_entering[id][1])
-                
-
-                # print("OUTGOING OBJECTS")
-                # for id in pedestrians_outgoing:
-                #     print(pedestrians_outgoing[id][0],pedestrians_outgoing[id][1])
-                
-                # for id in vehicles_outgoing:
-                #     print(vehicles_outgoing[id][0],vehicles_outgoing[id][1])
-                    
-
-                
-                # print("TO CONSIDER")
-                # for p in pedestrians_to_consider:
-                #     print(p)
-
-               
-
-                # for v in vehicles_to_consider:
-                #     print(v)   
-
-                # print("-"*50)
-
             
                 
                 pedestrians_last_frame = pedestrians_to_consider

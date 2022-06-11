@@ -1,17 +1,20 @@
 from math import cos,sin,tan,pi
 import numpy as np
 
+
 def rotate_x(angle):
     R = np.mat([[ 1,         0,           0],
                  [ 0, cos(angle), -sin(angle) ],
                  [ 0, sin(angle),  cos(angle) ]])
     return R
 
+
 def rotate_y(angle):
     R = np.mat([[ cos(angle), 0,  sin(angle) ],
                  [ 0,         1,          0 ],
                  [-sin(angle), 0,  cos(angle) ]])
     return R
+
 
 def rotate_z(angle):
     R = np.mat([[ cos(angle), -sin(angle), 0 ],
@@ -20,110 +23,129 @@ def rotate_z(angle):
     return R
 
 
+def to_rot(r):
+    return rotate_x(r[0]) * rotate_y(r[1]) * rotate_y(r[2])
+
+
 class Converter():
 
-    def __init__(self,camera_params):
-        self._camera_params = camera_params
-        self._intrinsic_matrix = self._get_intrinsic_matrix(self._camera_params)
-        self.inv_extrinsic_matrix = None
+    def __init__(self, camera_params):
+        """Initialize a converter from image point to 3d point.
 
-    def _get_intrinsic_matrix(self,camera_params):
+        Args:
+            camera_params(dict): A dictionary with the camera information.
+        """
+        self._cam_x = camera_params['x']
+        self._cam_y = camera_params['y']
+        self._cam_z = camera_params['z'] 
+        self._cam_pitch = camera_params['pitch']
+        self._cam_roll = camera_params['roll']
+        self._cam_yaw = camera_params['yaw']
+        self._cam_width = camera_params['width'] 
+        self._cam_height = camera_params['height'] 
+        self._cam_fov = camera_params['fov']
 
-        # Calculate Inverse Intrinsic Matrix for both depth cameras
-        f = camera_params["width"] /(2 * tan(camera_params["fov"] * pi / 360))
-        Center_X = camera_params["width"] / 2.0
-        Center_Y = camera_params["height"] / 2.0
+        self._set_intrinsic_matrix()
+
+    def _image_to_camera_frame(self, object_camera_frame, car_yaw):
+        """Transform the pixel from image frame to camera frame.
+
+        Args:
+            object_camera_frame (np.ndarray): A 4x1 array with [x;y;z;1].
+            car_yaw (float): rotation of the car respect to the xy plane.
+
+        Return: The point projected into the camera frame.
+        """
+        rotation_image_camera_frame = np.dot(rotate_z(car_yaw + 90 * pi / 180), rotate_x(90 * pi / 180))
+        image_camera_frame = np.zeros((4,4))
+        image_camera_frame[:3,:3] = rotation_image_camera_frame
+        image_camera_frame[:, -1] = [0, 0, 0, 1]
+
+        return np.dot(image_camera_frame, object_camera_frame)
+
+    def _set_intrinsic_matrix(self):
+        """Compute the intrinsic matrix starting from the camera parameters.
+        """
+        f = self._cam_width / (2 * tan(self._cam_fov * pi / 360))
+        Center_X = self._cam_width / 2.0
+        Center_Y = self._cam_height / 2.0
 
         intrinsic_matrix = np.array([[f, 0, Center_X],
-                                    [0, f, Center_Y],
-                                    [0, 0, 1]])
+                                     [0, f, Center_Y],
+                                     [0, 0, 1       ]])
 
-        #return np.linalg.inv(intrinsic_matrix)
-        return intrinsic_matrix
+        self._inv_intrinsic_matrix = np.linalg.inv(intrinsic_matrix)
 
-    # suppose camera orientation and position are 0,0,0 and camera_x,0,camera_z
-    def _set_extrinsic_matrix(self,x,y,z,yaw):
+    def convert_to_3D(self, pixel_xy, depth, car_x, car_y, car_z, car_yaw):
         """
-        HOW TO COMPUTE
-        x   = measurements.player_measurements.transform.location.x + cam_x_pos
-        y   = measurements.player_measurements.transform.location.y + cam_y_pos
-        z   = cam_z_pos
-        yaw = math.radians(measurements.player_measurements.transform.rotation.yaw)
+        Get a point in the image and return the 3D world coordinates.
 
+        Args:
+            pixel_xy: (x,y) point in the image.
+            depth: depth of the pixel_xy point in meters.
+            car_x (float): position of the car on x axes in meters
+            car_y (float): position of the car on y axes in meters
+            car_z (float): position of the car on z axes in meters
+            car_yaw (float): rotation of the car respect to the xy plane.
+
+        Return:
+            position: [x,y,z] representing that point in the 3D world.
         """
+        pixel_xy = np.reshape(np.array([*pixel_xy, 1]), (3,1))
 
-        extrinsic_matrix = np.zeros((4,4))
-        R = np.dot(rotate_z(yaw + 90 * pi / 180),rotate_x(90 * pi / 180))
+        # Projection Pixel to Image Frame
+        image_frame_vect = np.dot(self._inv_intrinsic_matrix, pixel_xy) * depth
+        
+        # Create extended vector
+        image_frame_vect_extended = np.zeros((4,1))
+        image_frame_vect_extended[:3] = image_frame_vect 
+        image_frame_vect_extended[-1] = 1
 
-        # R = np.dot(rotate_x(0 - 90* pi / 180), rotate_y(-yaw + 90* pi / 180))
-        # R = np.dot(R, rotate_z((0) + 90* pi / 180))
+        # Projection Camera to Vehicle Frame
+        camera_frame = self._image_to_camera_frame(image_frame_vect_extended, car_yaw)
+        camera_frame = camera_frame[:3]
+        camera_frame = np.asarray(np.reshape(camera_frame, (1,3)))
 
-        extrinsic_matrix[:3,:3] = R
-        extrinsic_matrix[:,-1]  = [x, y, z, 1]
-        self.inv_extrinsic_matrix = extrinsic_matrix
-    
-    def convert_to_3D(self,pixel,pixel_depth,ego_x,ego_y,ego_yaw):
-            """
-            pixel should be [x,y,1]
-            pixel_depth = depth_data[y1][x1]
-            """
-            # Projection Pixel to Image Frame
-            inv_intrinsic_matrix = np.linalg.inv(self._intrinsic_matrix)
-            camera_frame_point = np.dot(inv_intrinsic_matrix, pixel) * pixel_depth
-            camera_frame_point = np.reshape(camera_frame_point,(3,1))
-            
-            world_frame_point = np.zeros((4,1))
-            world_frame_point[:3] = camera_frame_point
-            world_frame_point[-1] = 1
+        camera_frame_extended = np.zeros((4,1))
+        camera_frame_extended[:3] = camera_frame.T 
+        camera_frame_extended[-1] = 1
 
-            sign_x = 1
-            sign_y = 1
+        camera_to_vehicle_frame = np.zeros((4,4))
+        
+        # Take into account the rotation of the camera respect to the car and the rotation of the car.
+        # This works because the car does not rotate on pitch and roll, so yaw is coherent.
+        camera_to_vehicle_frame[:3,:3] = to_rot([self._cam_roll, self._cam_pitch, self._cam_yaw])
+        # Take into account the rotation of the car and the position.
+        rot_x = cos(car_yaw) * (self._cam_x - 0) - sin(car_yaw) * (self._cam_y - 0) + 0
+        rot_y = sin(car_yaw) * (self._cam_x - 0) + cos(car_yaw) * (self._cam_y - 0) + 0
+        camera_to_vehicle_frame[:,-1] = [car_x + rot_x, car_y + rot_y, car_z + self._cam_z, 1]
 
-            # check if that's improve performance or not
-            if ego_yaw>= 0 and ego_yaw<=pi/2:
-                pass
-            elif ego_yaw>pi/2 and ego_yaw<=pi:
-                sign_x = -1
-            elif ego_yaw> -pi and ego_yaw<= -pi/2:
-                sign_x = -1
-                sign_y = -1
-            elif ego_yaw> -pi/2 and ego_yaw < 0:
-                sign_y = -1
+        vehicle_frame = np.dot(camera_to_vehicle_frame, camera_frame_extended)
+        vehicle_frame = vehicle_frame[:3]
+        
 
-            # x   = ego_x + cos(ego_yaw)*self._camera_params["x"]
-            # y   = ego_y 
-            # z   = self._camera_params["z"]
+        return vehicle_frame
 
-            x   = ego_x + sign_x*self._camera_params["x"]
-            y   = ego_y + sign_y*self._camera_params["y"]
-            z   = self._camera_params["z"]
-            yaw = ego_yaw
-            self._set_extrinsic_matrix(x,y,z,yaw)
-            world_frame_point = np.dot(self.inv_extrinsic_matrix, world_frame_point)
-            world_frame_point = world_frame_point[:3]
 
-            return world_frame_point
-
-            
+# DRIVER TEST            
 if __name__ == "__main__":
     camera_parameters = {}
-    camera_parameters['x'] = 1.8 
+    camera_parameters['x'] = 0.0 
     camera_parameters['y'] = 0.0
-    camera_parameters['z'] = 1.3 
-    camera_parameters['pitch'] = 0.0 
+    camera_parameters['z'] = 0.0
+    camera_parameters['pitch'] = 0.0
     camera_parameters['roll'] = 0.0
     camera_parameters['yaw'] = 0.0
     camera_parameters['width'] = 200 
     camera_parameters['height'] = 200 
     camera_parameters['fov'] = 90
 
-    ego_x = 200
+    ego_x = 100
     ego_y = 200
-    ego_yaw = 0
+    ego_z = 0
+    ego_yaw = -pi/4
 
     depth = 5
-    pixel = [100,100,1]
+    pixel_xy = [10,100]
     c = Converter(camera_parameters)
-    print(c.convert_to_3D(pixel,depth,ego_x,ego_y,ego_yaw))
-
-
+    print([round(x,2) for x in c.convert_to_3D(pixel_xy, depth, ego_x, ego_y, ego_z, ego_yaw)])
