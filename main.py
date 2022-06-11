@@ -734,6 +734,7 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
         for last_agent in last_agents:
             if id == last_agent.get_id(): # check if it just detected in the last frame
                 check_existing = True
+                # print(f"[ENTERING FUNC] {id} is already seen")
                 agents_to_consider.append(current_agent)
                 if vehicles_dict is not None:
                     vehicles_dict[id] = current_agent
@@ -756,9 +757,11 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
     for id in entering_ids:
         counter = entering[id][0]
         if counter == MIN_ENTERING_FRAME:
-            agents_to_consider.append(current_agent)
+            # print(f"[ENTERING FUNC] {id} is now an object")
+
+            agents_to_consider.append( entering[id][1])
             if vehicles_dict is not None:
-                vehicles_dict[id] = current_agent
+                vehicles_dict[id] = entering[id][1]
             # there is no need to flag this object as entering object because now it is a real object
             del entering[id]
 
@@ -774,6 +777,8 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
                 break
         
         if not check_entering_condition:
+            # print(f"[ENTERING FUNC] {id} is lost is entering condistion")
+
             del entering[id]
 
     return agents_to_consider
@@ -791,15 +796,19 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
                 check_ghost = False
                 break
 
+       
         # update number of frame where this object is a ghost
         if check_ghost:
             if id in outgoing:
                 outgoing[id][0]+=1
             else:
                 outgoing[id] = [1, last_agent]
+            # print(f"[OUTGOING] {id} is a ghost, values {outgoing[id][0]}")
+            
         # delete agents that are not ghost yet 
         else: 
             if id in outgoing:
+                # print(f"[OUTGOING] Delete ghost object it is seen in the current frame ")
                 del outgoing[id]
 
     
@@ -810,10 +819,12 @@ def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_di
     for id in ids_ghost:
         if outgoing[id][0] < MAX_GHOST_FRAME:
             agent = outgoing[id][1]
+            # print(f"[OUTGOING] {id} is still an object")
             agents_to_consider.append(agent)
             if vehicle_dict is not None:
                 vehicle_dict[id]=agent
         else:
+            # print(f"[OUTGOING] {id} is not an object")
             del outgoing[id] # if MAX_GHOST_FRAME are passed 
 
 
@@ -1401,6 +1412,11 @@ def exec_waypoint_nav_demo(args, host, port):
 
                             pedestrian = Agent(agent.id,[location.x,location.y],bb,orientation,speed,"Pedestrian")
                             pedestrians.append(pedestrian)
+                            if id in pedestrians_outgoing:
+                                # print(f"[MAIN] Update position of ghost {id}, {pedestrian}")
+
+                                # update its data because in the current frame this object can be still occludeed 
+                                pedestrians_outgoing[id][1] = pedestrian
 
                     if agent.HasField("vehicle"):
                         location = agent.vehicle.transform.location
@@ -1422,6 +1438,7 @@ def exec_waypoint_nav_demo(args, host, port):
                             vehicles.append(vehicle)
                             if id in vehicles_outgoing:
                                 # update its data because in the current frame this object can be still occludeed 
+                                # print(f"[MAIN] Update position of ghost {id}, {vehicle}")
                                 vehicles_outgoing[id][1] = vehicle
                             if SIMULATION_PERFECT:
                                 _vehicles_dict[id] = vehicle 
@@ -1448,29 +1465,48 @@ def exec_waypoint_nav_demo(args, host, port):
 
                 ########    entering  management 
                 output_p = agent_entering_management(pedestrian_associated,pedestrians_last_frame,pedestrians_entering)
-                
                 output_v = agent_entering_management(vehicles_associated,vehicles_last_frame,vehicles_entering,vehicles_dict)
+                
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
-                
-                print("pedestrians")
-                for p in pedestrians_to_consider:
-                    print(p)
 
-                print("vehicles")
-
-                for v in vehicles_to_consider:
-                    print(v)   
-
-                print("-"*50)
-
-                output_p = agents_outgoing_managements(pedestrian_associated,pedestrians_last_frame,pedestrians_outgoing)
-                output_v = agents_outgoing_managements(vehicles_associated,vehicles_last_frame,vehicles_outgoing,vehicles_dict)
+                output_p = agents_outgoing_managements(pedestrians_to_consider,pedestrians_last_frame,pedestrians_outgoing)
+                output_v = agents_outgoing_managements(vehicles_to_consider,vehicles_last_frame,vehicles_outgoing,vehicles_dict)
 
                 pedestrians_to_consider += output_p
                 vehicles_to_consider += output_v
+
+                # print("FRAME: ",frame)
+
+                # print("ENTERING OBJECTS")
+                # for id in pedestrians_entering:
+                #     print(pedestrians_entering[id][0],pedestrians_entering[id][1])
                 
-                print("after outgoing")
+                # for id in vehicles_entering:
+                #     print(vehicles_entering[id][0],vehicles_entering[id][1])
+                
+
+                # print("OUTGOING OBJECTS")
+                # for id in pedestrians_outgoing:
+                #     print(pedestrians_outgoing[id][0],pedestrians_outgoing[id][1])
+                
+                # for id in vehicles_outgoing:
+                #     print(vehicles_outgoing[id][0],vehicles_outgoing[id][1])
+                    
+
+                
+                # print("TO CONSIDER")
+                # for p in pedestrians_to_consider:
+                #     print(p)
+
+               
+
+                # for v in vehicles_to_consider:
+                #     print(v)   
+
+                # print("-"*50)
+
+            
                 
                 pedestrians_last_frame = pedestrians_to_consider
                 vehicles_last_frame = vehicles_to_consider
@@ -1524,7 +1560,7 @@ def exec_waypoint_nav_demo(args, host, port):
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
 
 
-                if False:
+                if True:
                     if WINDOWS_OS:
                         os.system("cls")
                     else:
