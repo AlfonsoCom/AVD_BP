@@ -26,7 +26,7 @@ class Agent():
         return self._speed
 
     def __str__(self):
-        return f"{self._type}(id={self._id}, x={round(self._position.x,2)}, y={round(self._position.y,2)})"
+        return f"{self._type}(id={self._id}, x={round(self._position[0],2)}, y={round(self._position[1],2)})"
 
 
 
