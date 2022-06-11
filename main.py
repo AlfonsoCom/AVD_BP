@@ -72,6 +72,8 @@ DESIRED_SPEED = 5.0
 
 WINDOWS_OS = os.name == 'nt'
 
+WEATHER = "DEFAULT"
+
 WEATHERID = {
     "DEFAULT": 0,
     "CLEARNOON": 1,
@@ -89,7 +91,7 @@ WEATHERID = {
     "HARDRAINSUNSET": 13,
     "SOFTRAINSUNSET": 14,
 }
-SIMWEATHER = WEATHERID["CLEARNOON"]     # set simulation weather
+#SIMWEATHER = WEATHERID[WEATHER]     # set simulation weather
 
 FIGSIZE_X_INCHES   = 8      # x figure size of feedback in inches
 FIGSIZE_Y_INCHES   = 8      # y figure size of feedback in inches
@@ -335,7 +337,7 @@ def make_carla_settings(args):
         NumberOfPedestrians=NUM_PEDESTRIANS,
         SeedVehicles=SEED_VEHICLES,
         SeedPedestrians=SEED_PEDESTRIANS,
-        WeatherId=SIMWEATHER,
+        WeatherId=WEATHERID[args.weather],
         QualityLevel=args.quality_level)
 
     # Common cameras settings
@@ -1518,6 +1520,7 @@ def exec_waypoint_nav_demo(args, host, port):
                         os.system("clear")
 
                     print(f"[LOGINFO]: from {args.start} to {args.dest}\t[DESIRED_SPEED]: {DESIRED_SPEED} m/s")
+                    print(f"[WEATHER]: {args.weather}")
                     print(f"[PEDESTRIANS]: {NUM_PEDESTRIANS}, {SEED_PEDESTRIANS}\t[VEHICLES]: {NUM_VEHICLES}, {SEED_VEHICLES}\n")
 
                     # Perform a state transition in the behavioural planner.
@@ -1771,6 +1774,7 @@ def main():
     Args:
         -v, --verbose: print debug information
         -l, --local: use local server
+        -w, --weather: weather simulation
         -s, --start: player start index
         -d, --dest: player destination index
         -a, --autopilot: enable autopilot
@@ -1788,6 +1792,13 @@ def main():
         '--local', '-l',
         action='store_true',
         dest = 'local'
+    )
+    argparser.add_argument(
+        '--weather', '-w',
+        metavar='weather',
+        type=str,
+        default=WEATHER,
+        help='Weather simulation'
     )
     argparser.add_argument(
         '-s', '--start',
