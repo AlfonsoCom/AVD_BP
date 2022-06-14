@@ -1058,6 +1058,10 @@ def exec_waypoint_nav_demo(args, host, port):
 
         waypoints = np.array(waypoints)
 
+        print("[MAIN] n waypoints -> ", len(waypoints))
+        with open("waypoints.txt","w") as f:
+            for x,y,v in waypoints:
+                f.writelines(f"{x}, {y}, {v}\n")
 
         #############################################
         # Controller 2D Class Declaration
