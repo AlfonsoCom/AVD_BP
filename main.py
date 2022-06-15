@@ -38,8 +38,8 @@ from carla.sensor import Camera
 from carla.image_converter import labels_to_array, depth_to_array, to_bgra_array
 from carla.planner.city_track import CityTrack
 
-from AVD_BP.carla_object_detector.carla_yolov3_model.OD import load_model,predict,postprocess
-from AVD_BP.carla_object_detector.carla_yolov3_model.config import VEHICLE_TAG,PERSON_TAG
+from AVD_BP.carla_object_detector.carla_yolo_model.OD import load_model,predict,postprocess
+from AVD_BP.carla_object_detector.carla_yolo_model.config import VEHICLE_TAG,PERSON_TAG
 
 SERVER_HOST = "193.205.163.183"
 SERVER_PORT = 6018
