@@ -78,7 +78,7 @@ class Converter():
 
     def convert_to_3D(self, pixel_xy, depth, car_x, car_y, car_z, car_yaw):
         """
-        Get a point in the image and return the 3D world coordinates.
+        Returns the 3D world coordinate from the specific point of the image.
 
         Args:
             pixel_xy: (x,y) point in the image.

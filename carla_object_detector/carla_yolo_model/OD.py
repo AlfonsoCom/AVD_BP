@@ -29,7 +29,7 @@ vehicles_objects = ["bicycle","car","motorbike","aeroplane","bus","train","truck
 with open(classesFile,'rt') as f:
     classes = f.read().rstrip('\n').split('\n')
 
-# # model configuration
+# # model configuration WE CHOOSE YOLO V4
 if YOLO_V3:
     # https://github.com/aoruize/carla-yolov3-model
     modelConf = os.path.join(file_path,'yolov3.cfg')

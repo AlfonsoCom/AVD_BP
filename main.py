@@ -714,6 +714,15 @@ def association_vehicle_pedestrian(perfect_data, real_data, real_data_bis, sidew
     return data_to_consider, vehicle_dict
                     
 def agent_entering_management(current_agents,last_agents, entering,vehicles_dict = None):
+    """
+    Agents entering manangements 
+    Args:  
+        current_agents (list): list of all pedestrian (or vehicles) that are detected in the current frame
+        last_agents (list); list of all pedestrians (or vehicles) that were considered in the last frame
+        entering (dict): dictionary where the key are the id of entering agents and the value is a list of two field. 
+                        the first indicated the number of frame in which it was consider an entering agent while the second contains
+                        the informations regarding the specific agent.
+    """
     agents_to_consider = []
     MIN_ENTERING_FRAME = 2
     # entering pedestrian
@@ -775,6 +784,15 @@ def agent_entering_management(current_agents,last_agents, entering,vehicles_dict
     return agents_to_consider
 
 def agents_outgoing_managements(current_agents,last_agents, outgoing, vehicle_dict=None):
+    """
+    Agents outgoing manangements (ghost situation)
+    Args:  
+        current_agents (list): list of all pedestrian (or vehicles) that are detected in the current frame
+        last_agents (list); list of all pedestrians (or vehicles) that were considered in the last frame
+        outgoing (dict): dictionary where the key are the id of ghost agents and the value is a list of two field. 
+                        the first indicated the number of frame in which it was  a ghost while the second contains
+                        the informations regarding the specific agent.
+    """
     agents_to_consider = []
     MAX_GHOST_FRAME = 5
 
