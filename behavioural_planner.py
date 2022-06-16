@@ -6,7 +6,7 @@ from shapely.geometry import Point, Polygon
 from pedestrians import *
 from vehicles import *
 from traffic_lights import *
-
+from utils import get_closest_index
 # State machine states
 FOLLOW_LANE = 0
 DECELERATE_TO_STOP = 1
@@ -26,8 +26,8 @@ RED = 2
 BASE_LOOKSIDEWAYS_RIGHT = 3
 BASE_LOOKSIDEWAYS_LEFT = 3
 
-MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT = 5
-MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT = 4
+PEDESTRIAN_LOOKSIDEWAYS_LEFT = 5
+PEDESTRIAN_LOOKSIDEWAYS_RIGHT = 4
 
 
 class BehaviouralPlanner:
@@ -123,8 +123,8 @@ class BehaviouralPlanner:
         # complete, and examine the check_for_stop_signs() function to
         # understand it.
         closest_index = None
-        pedestrian_looksideways_left = MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT
-        pedestrian_looksideways_right = MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT
+        # pedestrian_looksideways_left = MAX_PEDESTRIAN_LOOKSIDEWAYS_LEFT
+        # pedestrian_looksideways_right = MAX_PEDESTRIAN_LOOKSIDEWAYS_RIGHT
         
         
         closest_len, closest_index = get_closest_index(waypoints, ego_state)
@@ -159,7 +159,6 @@ class BehaviouralPlanner:
                     self._lead_vehicle = detect_lead_vehicle(ego_state[:2],ego_state[2],np.array([self._lead_vehicle],dtype=object),self._follow_lead_vehicle_lookahead+10)
                 except KeyError:
                     self._lead_vehicle = None
-                #self.check_for_lead_vehicle(ego_state, self._lead_vehicle.get_position())
                 if self._lead_vehicle is  None:
                     self._follow_lead_vehicle = False
 
@@ -168,8 +167,9 @@ class BehaviouralPlanner:
             goal_index_pd = goal_index
             goal_index_tl = goal_index
 
+            # check car collisions
             car_collision_predicted, car_stop = check_vehicles(ego_state[:2],ego_state[2],self._vehicles,self._lookahead,
-            looksideways_left=3,looksideways_right=3,waypoints=waypoints,closest_index=closest_index,goal_index=goal_index,
+            looksideways_left=BASE_LOOKSIDEWAYS_LEFT,looksideways_right=BASE_LOOKSIDEWAYS_RIGHT,waypoints=waypoints,closest_index=closest_index,goal_index=goal_index,
             lead_vehicle=self._follow_lead_vehicle)
 
             self._car_collision_predicted = car_collision_predicted
@@ -182,13 +182,10 @@ class BehaviouralPlanner:
                 self._state = DECELERATE_TO_STOP
 
 
-            ### check pedestrian intersection
-            # pedestrian_detected, car_stop = check_pedestrian(ego_state[:2],ego_state[2],closed_loop_speed,
-            #     self._pedestrians,lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left)
-            
+            # check pedestrian collisions
             
             pedestrian_detected, car_stop = check_pedestrians(ego_state[:2],ego_state[2],self._pedestrians,
-            lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left,
+            lookahead= self._lookahead ,looksideways_right=PEDESTRIAN_LOOKSIDEWAYS_RIGHT,looksideways_left=PEDESTRIAN_LOOKSIDEWAYS_LEFT,
                 waypoints=waypoints,closest_index=closest_index,goal_index=goal_index)
 
                 
@@ -203,6 +200,7 @@ class BehaviouralPlanner:
                 wp_speed = 0
                 self._state = DECELERATE_TO_STOP
                        
+            # check red traffic lights
             self._current_traffic_light = check_traffic_light(ego_state[:2],ego_state[2],self._traffic_lights,self._lookahead,looksideways_right=4.5)
             status = None
 
@@ -256,7 +254,7 @@ class BehaviouralPlanner:
             
             # check if there are some vehicles along car trajectory
             car_collision_predicted, car_stop = check_vehicles(ego_state[:2],ego_state[2],self._vehicles,self._lookahead,
-            looksideways_left=3,looksideways_right=3,waypoints=waypoints,closest_index=closest_index,goal_index= self._goal_index_to_agent_collision,
+            looksideways_left=BASE_LOOKSIDEWAYS_LEFT,looksideways_right=BASE_LOOKSIDEWAYS_RIGHT,waypoints=waypoints,closest_index=closest_index,goal_index= self._goal_index_to_agent_collision,
             lead_vehicle=False)
 
             self._car_collision_predicted = car_collision_predicted
@@ -266,7 +264,7 @@ class BehaviouralPlanner:
 
             # check if there are some pedetrian along car trajectory
             pedestrian_detected, car_stop = check_pedestrians(ego_state[:2],ego_state[2],self._pedestrians,
-            lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left,
+            lookahead= self._lookahead ,looksideways_right=PEDESTRIAN_LOOKSIDEWAYS_RIGHT,looksideways_left=PEDESTRIAN_LOOKSIDEWAYS_LEFT,
                 waypoints=waypoints,closest_index=closest_index,goal_index=self._goal_index_to_agent_collision)
 
             self._pedestrian_detected = pedestrian_detected
@@ -320,7 +318,7 @@ class BehaviouralPlanner:
 
             # check if there are some pedetrian along car trajectory
             pedestrian_detected, _ = check_pedestrians(ego_state[:2],ego_state[2],self._pedestrians,
-            lookahead= self._lookahead ,looksideways_right=pedestrian_looksideways_right,looksideways_left=pedestrian_looksideways_left,
+            lookahead= self._lookahead ,looksideways_right=BASE_LOOKSIDEWAYS_LEFT,looksideways_left=BASE_LOOKSIDEWAYS_RIGHT,
                 waypoints=waypoints,closest_index=closest_index,goal_index=self._goal_index_to_agent_collision)
 
             
@@ -402,144 +400,4 @@ class BehaviouralPlanner:
 
         return wp_index % len(waypoints)
                 
-    # Checks to see if we need to modify our velocity profile to accomodate the
-    # lead vehicle.
-    def check_for_lead_vehicle(self, ego_state, lead_car_position):
-        """Checks for lead vehicle within the proximity of the ego car, such
-        that the ego car should begin to follow the lead vehicle.
-
-        args:
-            ego_state: ego state vector for the vehicle. (global frame)
-                format: [ego_x, ego_y, ego_yaw, ego_open_loop_speed]
-                    ego_x and ego_y     : position (m)
-                    ego_yaw             : top-down orientation [-pi to pi]
-                    ego_open_loop_speed : open loop speed (m/s)
-            lead_car_position: The [x, y] position of the lead vehicle.
-                Lengths are in meters, and it is in the global frame.
-        sets:
-            self._follow_lead_vehicle: Boolean flag on whether the ego vehicle
-                should follow (true) the lead car or not (false).
-        """
-        # Check lead car position delta vector relative to heading, as well as
-        # distance, to determine if car should be followed.
-        # Check to see if lead vehicle is within range, and is ahead of us.
-        if not self._follow_lead_vehicle:
-            # Compute the angle between the normalized vector between the lead vehicle
-            # and ego vehicle position with the ego vehicle's heading vector.
-            lead_car_delta_vector = [lead_car_position[0] - ego_state[0], 
-                                     lead_car_position[1] - ego_state[1]]
-            lead_car_distance = np.linalg.norm(lead_car_delta_vector)
-            # In this case, the car is too far away.   
-            if lead_car_distance > self._follow_lead_vehicle_lookahead:
-                return
-
-            lead_car_delta_vector = np.divide(lead_car_delta_vector, 
-                                              lead_car_distance)
-            ego_heading_vector = [math.cos(ego_state[2]), 
-                                  math.sin(ego_state[2])]
-            # Check to see if the relative angle between the lead vehicle and the ego
-            # vehicle lies within +/- 45 degrees of the ego vehicle's heading.
-            if np.dot(lead_car_delta_vector, 
-                      ego_heading_vector) < (1 / math.sqrt(2)):
-                return
-
-            self._follow_lead_vehicle = True
-
-        else:
-            lead_car_delta_vector = [lead_car_position[0] - ego_state[0], 
-                                     lead_car_position[1] - ego_state[1]]
-            lead_car_distance = np.linalg.norm(lead_car_delta_vector)
-
-            # Check to see if the lead vehicle is still within the ego vehicle's
-            # frame of view.
-            lead_car_delta_vector = np.divide(lead_car_delta_vector, lead_car_distance)
-            ego_heading_vector = [math.cos(ego_state[2]), math.sin(ego_state[2])]
-
-            is_in_car_view = np.dot(lead_car_delta_vector, ego_heading_vector) > (1 / math.sqrt(2))
-
-            if is_in_car_view:
-                if lead_car_distance < self._follow_lead_vehicle_lookahead + 15:
-                    return
-                
-            # if np.dot(lead_car_delta_vector, ego_heading_vector) > (1 / math.sqrt(2)):
-            #     return
-
-            # # Add a 15m buffer to prevent oscillations for the distance check.
-            # if lead_car_distance < self._follow_lead_vehicle_lookahead + 15:
-            #     return
-            
-
-            self._follow_lead_vehicle = False
-
-# Compute the waypoint index that is closest to the ego vehicle, and return
-# it as well as the distance from the ego vehicle to that waypoint.
-def get_closest_index(waypoints, ego_state):
-    """Gets closest index a given list of waypoints to the vehicle position.
-
-    args:
-        waypoints: current waypoints to track. (global frame)
-            length and speed in m and m/s.
-            (includes speed to track at each x,y location.)
-            format: [[x0, y0, v0],
-                     [x1, y1, v1],
-                     ...
-                     [xn, yn, vn]]
-            example:
-                waypoints[2][1]: 
-                returns the 3rd waypoint's y position
-
-                waypoints[5]:
-                returns [x5, y5, v5] (6th waypoint)
-        ego_state: ego state vector for the vehicle. (global frame)
-            format: [ego_x, ego_y, ego_yaw, ego_open_loop_speed]
-                ego_x and ego_y     : position (m)
-                ego_yaw             : top-down orientation [-pi to pi]
-                ego_open_loop_speed : open loop speed (m/s)
-
-    returns:
-        [closest_len, closest_index]:
-            closest_len: length (m) to the closest waypoint from the vehicle.
-            closest_index: index of the waypoint which is closest to the vehicle.
-                i.e. waypoints[closest_index] gives the waypoint closest to the vehicle.
-    """
-    closest_len = float('Inf')
-    closest_index = 0
-
-    for i in range(len(waypoints)):
-        temp = (waypoints[i][0] - ego_state[0])**2 + (waypoints[i][1] - ego_state[1])**2
-        if temp < closest_len:
-            closest_len = temp
-            closest_index = i
-    closest_len = np.sqrt(closest_len)
-
-    return closest_len, closest_index
-
-# Checks if p2 lies on segment p1-p3, if p1, p2, p3 are collinear.        
-def pointOnSegment(p1, p2, p3):
-    if (p2[0] <= max(p1[0], p3[0]) and (p2[0] >= min(p1[0], p3[0])) and \
-       (p2[1] <= max(p1[1], p3[1])) and (p2[1] >= min(p1[1], p3[1]))):
-        return True
-    else:
-        return False
-
-def get_stop_wp(waypoints, closest_index,goal_index,position_to_stop):
-    # note -> this function works only if goal_index - closest_index > 2
-    for i in range(closest_index,goal_index):
-        dist_wps = np.subtract(waypoints[i+1][:2],waypoints[i][:2])
-        s2 = np.add(position_to_stop,[dist_wps[1],dist_wps[0]])
-        reference_vector = np.subtract(s2,position_to_stop)
-        v1 = np.subtract(waypoints[i][:2],position_to_stop)
-        v2 = np.subtract(waypoints[i+1][:2],position_to_stop)
-        sign_1 = np.sign(np.cross(reference_vector,v1))
-        sign_2 = np.sign(np.cross(reference_vector,v2))
-
-        
-        if (sign_1 == 0) and pointOnSegment(position_to_stop, waypoints[i][:2], s2):
-            return i-1
-        if (sign_2 == 0) and pointOnSegment(position_to_stop, waypoints[i+1][:2], s2):
-            return i
-        if sign_1 != sign_2:
-            return i
-
-    return goal_index
-
+ 

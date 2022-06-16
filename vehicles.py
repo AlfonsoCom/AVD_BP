@@ -71,7 +71,7 @@ def detect_lead_vehicle(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right=2.
 
 
 
-def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index,lead_vehicle=True):
+def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index,lead_vehicle=True,car_extent=1.5,projection_length=15):
     """
         Detects the presence of a vehicle on the ego trajectory. If a vehicle collision is estimated returns 
         true flag and the new goal index to stop.
@@ -79,13 +79,15 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
             ego_pos list([x,y]):  ego car coordinates
             ego_yaw float : ego car orientation
             vehicles np.array(): array of vehicles
-            lookahead float:  max  look a head distance 
+            lookahead float:  max  lookahead distance 
             looksideways_right float: max look right distance 
             looksideways_left float: max looksideways left distance
             waypoints np.array(): point that car should follow
             closest_index int:  the nearest waypoint index
             goal_index int: the goal waypoint index
             lead_vehicle Boolean: presence of a vehicle to follow 
+            car_extent float: area width between two consecutive waypoints 
+            v_distance float: vehicle projection length  
     """
     if len(vehicles)==0:
         return False,goal_index
@@ -94,7 +96,6 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
     A,B,C,D = compute_bb_verteces(ego_pos,lookahead,ego_yaw,looksideways_right,looksideways_left)
     bb = Polygon([A,B,C,D,A])
     
-    # numpy array pedestrians
     
     vehicles_boolean = vehicles == None
     for i,v in enumerate(vehicles):
@@ -137,15 +138,15 @@ def check_vehicles(ego_pos,ego_yaw,vehicles,lookahead,looksideways_right,looksid
         v_diff = np.subtract(next_point,start_point)
         norm = np.linalg.norm(v_diff)
         orientation = math.atan2(v_diff[1],v_diff[0])
-        car_extent_y = 1.5
-        A,B,C,D = compute_bb_verteces(start_point,norm,orientation,car_extent_y+CAR_LATERAL_MARGIN)
+        
+        A,B,C,D = compute_bb_verteces(start_point,norm,orientation,car_extent+CAR_LATERAL_MARGIN)
         car_path = Polygon([A,B,C,D,A])
         #car_path = LineString([start_point,next_point])
-        v_distance = 15 # in further work udapte this
+        # v_distance = 15 # in further work udapte this
         for v in vehicles:
             v_start_point = v.get_position()
             v_orientation = v.get_orientation()*math.pi/180
-            v_next_point = compute_point_along_direction(v_start_point,v_orientation,v_distance)
+            v_next_point = compute_point_along_direction(v_start_point,v_orientation,projection_length)
             v_path = LineString([v_start_point,v_next_point])
             intersected = v_path.intersects(car_path)
             if intersected:

@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 def compute_bb_verteces_parametrics(p,a,p_orientation,b,b1 = None,sign_x1=1,sign_y1=1,sign_x2=1,sign_y2=1):
     """
@@ -131,3 +132,77 @@ def compute_middle_point(x, y, width, height):
     middle_point = (x_middle_point, y_middle_point)
     
     return middle_point
+
+
+# Compute the waypoint index that is closest to the ego vehicle, and return
+# it as well as the distance from the ego vehicle to that waypoint.
+def get_closest_index(waypoints, ego_state):
+    """Gets closest index a given list of waypoints to the vehicle position.
+
+    args:
+        waypoints: current waypoints to track. (global frame)
+            length and speed in m and m/s.
+            (includes speed to track at each x,y location.)
+            format: [[x0, y0, v0],
+                     [x1, y1, v1],
+                     ...
+                     [xn, yn, vn]]
+            example:
+                waypoints[2][1]: 
+                returns the 3rd waypoint's y position
+
+                waypoints[5]:
+                returns [x5, y5, v5] (6th waypoint)
+        ego_state: ego state vector for the vehicle. (global frame)
+            format: [ego_x, ego_y, ego_yaw, ego_open_loop_speed]
+                ego_x and ego_y     : position (m)
+                ego_yaw             : top-down orientation [-pi to pi]
+                ego_open_loop_speed : open loop speed (m/s)
+
+    returns:
+        [closest_len, closest_index]:
+            closest_len: length (m) to the closest waypoint from the vehicle.
+            closest_index: index of the waypoint which is closest to the vehicle.
+                i.e. waypoints[closest_index] gives the waypoint closest to the vehicle.
+    """
+    closest_len = float('Inf')
+    closest_index = 0
+
+    for i in range(len(waypoints)):
+        temp = (waypoints[i][0] - ego_state[0])**2 + (waypoints[i][1] - ego_state[1])**2
+        if temp < closest_len:
+            closest_len = temp
+            closest_index = i
+    closest_len = np.sqrt(closest_len)
+
+    return closest_len, closest_index
+
+# Checks if p2 lies on segment p1-p3, if p1, p2, p3 are collinear.        
+def pointOnSegment(p1, p2, p3):
+    if (p2[0] <= max(p1[0], p3[0]) and (p2[0] >= min(p1[0], p3[0])) and \
+       (p2[1] <= max(p1[1], p3[1])) and (p2[1] >= min(p1[1], p3[1]))):
+        return True
+    else:
+        return False
+
+def get_stop_wp(waypoints, closest_index,goal_index,position_to_stop):
+    # note -> this function works only if goal_index - closest_index > 2
+    for i in range(closest_index,goal_index):
+        dist_wps = np.subtract(waypoints[i+1][:2],waypoints[i][:2])
+        s2 = np.add(position_to_stop,[dist_wps[1],dist_wps[0]])
+        reference_vector = np.subtract(s2,position_to_stop)
+        v1 = np.subtract(waypoints[i][:2],position_to_stop)
+        v2 = np.subtract(waypoints[i+1][:2],position_to_stop)
+        sign_1 = np.sign(np.cross(reference_vector,v1))
+        sign_2 = np.sign(np.cross(reference_vector,v2))
+
+        
+        if (sign_1 == 0) and pointOnSegment(position_to_stop, waypoints[i][:2], s2):
+            return i-1
+        if (sign_2 == 0) and pointOnSegment(position_to_stop, waypoints[i+1][:2], s2):
+            return i
+        if sign_1 != sign_2:
+            return i
+
+    return goal_index
+

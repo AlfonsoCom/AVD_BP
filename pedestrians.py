@@ -10,7 +10,7 @@ CAR_LATERAL_MARGIN = 0.5
 
 
 
-def check_pedestrians(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index):
+def check_pedestrians(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,looksideways_left,waypoints,closest_index,goal_index,car_extent=1.5,projection_length=15):
     """
         Predict the presence of a pedestrian on the ego trajectory. If a pedestrian collision is estimated returns 
         true flag and the new goal index to stop.
@@ -24,6 +24,8 @@ def check_pedestrians(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,l
             waypoints np.array(): point that car should follow
             closest_index int:  the nearest waypoint index
             goal_index int: the goal waypoint index
+            car_extent float: area width between two consecutive waypoints 
+            projection_length float: vehicle projection length 
     """
     if len(pedestrians)==0:
         return False,goal_index
@@ -58,14 +60,11 @@ def check_pedestrians(ego_pos,ego_yaw,pedestrians,lookahead,looksideways_right,l
         v_diff = np.subtract(next_point,start_point)
         norm = np.linalg.norm(v_diff)
         orientation = math.atan2(v_diff[1],v_diff[0])
-        car_extent_y = 1.5
-        A,B,C,D = compute_bb_verteces(start_point,norm,orientation,car_extent_y+CAR_LATERAL_MARGIN)
+        A,B,C,D = compute_bb_verteces(start_point,norm,orientation,car_extent+CAR_LATERAL_MARGIN)
         car_path = Polygon([A,B,C,D,A])
-        #car_path = LineString([start_point,next_point])
-        pd_distance = 15 # in further work udapte this
         for pd in pds:
             pd_start_point = pd.get_position()
-            pd_next_point = compute_point_along_direction(pd_start_point,pd.get_orientation(),pd_distance)
+            pd_next_point = compute_point_along_direction(pd_start_point,pd.get_orientation(),projection_length)
             pd_path = LineString([pd_start_point,pd_next_point])
             intersected = pd_path.intersects(car_path)
             if intersected:
